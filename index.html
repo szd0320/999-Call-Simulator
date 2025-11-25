@@ -424,7 +424,7 @@
         };
 
         const OperatorApp = {
-            callStatus: null, dialingScreen: null, inCallScreen: null, conversationLog: null, userOptions: null, callTimerDisplay: null, startCallBtn: null, endCallBtn: null, micIcon: null, micStatusText: null, pttOverrideBtn: null, pttText: null, speedSlider: null, speedValueDisplay: null, callTimer: null, seconds: 0, currentNodeId: 'start', finalTranscript: "", audioCtx: null, operatorTypingTimeout: null, handlerRate: 1.0, speechEndTimeout: null, currentETA: null, capturedData: {},
+            callStatus: null, dialingScreen: null, inCallScreen: null, conversationLog: null, userOptions: null, callTimerDisplay: null, startCallBtn: null, endCallBtn: null, micIcon: null, micStatusText: null, pttOverrideBtn: null, pttText: null, speedSlider: null, speedValueDisplay: null, callTimer: null, seconds: 0, currentNodeId: 'start', finalTranscript: "", audioCtx: null, operatorTypingTimeout: null, handlerRate: 1.0, speechEndTimeout: null, currentETA: null, capturedData: {}, currentUtterance: null,
             script: {
                 'start_call': { operator: "Hello, emergency service operator. Which service do you require? Fire, police or ambulance?", listen: true, keywords: {"ambulance": "connect_ambulance", "police": "connect_police", "fire": "connect_fire"} },
                 'connect_police': { operator: "Connecting to Police.", listen: false, next: 'end_call_final' },
@@ -542,12 +542,35 @@
             loadVoices: function() { const voices = AppManager.synth.getVoices(); this.selectedVoice = voices.find(v => v.name.includes('Google UK English Female')) || voices.find(v => v.name.includes('Google US English')) || voices.find(v => v.lang === 'en-GB' && v.name.includes('Female')) || voices.find(v => v.lang === 'en-GB') || voices.find(v => v.lang.startsWith('en-')) || null; },
             speakText: function(text) { 
                 if (AppManager.synth.speaking) AppManager.synth.cancel(); 
-                const u = new SpeechSynthesisUtterance(text); 
-                u.onend = () => { 
+                this.currentUtterance = new SpeechSynthesisUtterance(text); // Store in persistent property
+                this.currentUtterance.onend = () => { 
                     const node = this.script[this.currentNodeId]; 
-                    if (node && node.listen === true && AppManager.recognition) { this.finalTranscript = ''; AppManager.recognition.continuous = false; AppManager.recognition.interimResults = true; AppManager.recognition.start(); } else if (node && node.listen === false && node.next) { setTimeout(() => this.transitionToNode(node.next), 500); } 
-                }; 
-                if (this.selectedVoice) u.voice = this.selectedVoice; u.rate = this.handlerRate; u.pitch = 1.05; AppManager.synth.speak(u); 
+                    if (node && node.listen === true && AppManager.recognition) { 
+                        this.finalTranscript = ''; 
+                        try {
+                            AppManager.recognition.continuous = false; 
+                            AppManager.recognition.interimResults = true; 
+                            AppManager.recognition.start(); 
+                        } catch(e) { console.error("Rec start error", e); }
+                    } else if (node && node.listen === false && node.next) { 
+                        setTimeout(() => this.transitionToNode(node.next), 500); 
+                    } 
+                };
+                // Safety timeout in case onend doesn't fire
+                setTimeout(() => {
+                    if (AppManager.synth.speaking) {
+                        // Still speaking, do nothing
+                    } else if (!AppManager.isListening && this.currentUtterance) {
+                        // Not speaking, not listening, assume onend failed
+                        console.warn("Forcing speech end event");
+                        if(this.currentUtterance.onend) this.currentUtterance.onend();
+                    }
+                }, (text.length * 100) + 2000); // Estimate duration + buffer
+
+                if (this.selectedVoice) this.currentUtterance.voice = this.selectedVoice; 
+                this.currentUtterance.rate = this.handlerRate; 
+                this.currentUtterance.pitch = 1.05; 
+                AppManager.synth.speak(this.currentUtterance); 
             },
             toggleListening: function() { if (!AppManager.recognition) return; if (AppManager.isListening) { AppManager.recognition.stop(); } else { if (AppManager.synth.speaking) AppManager.synth.cancel(); this.finalTranscript = ''; try { AppManager.recognition.continuous = false; AppManager.recognition.interimResults = true; AppManager.recognition.start(); } catch (error) {} } },
             handleVoiceCommand: function(command) { 
@@ -560,7 +583,7 @@
                 const matchedOption = options.find(opt => command.includes(opt.text.toLowerCase().replace(/[,.]/g, ''))); 
                 if (matchedOption) nextNodeId = matchedOption.next; else { for (const keyword in keywords) { if (command.includes(keyword)) { nextNodeId = keywords[keyword]; break; } } } 
                 if (!nextNodeId && node.default) nextNodeId = node.default; 
-                if (nextNodeId) this.transitionToNode(nextNodeId, command); else if (AppManager.recognition) { this.finalTranscript = ''; AppManager.recognition.continuous = false; AppManager.recognition.interimResults = true; AppManager.recognition.start(); } 
+                if (nextNodeId) this.transitionToNode(nextNodeId, command); else if (AppManager.recognition) { this.finalTranscript = ''; try { AppManager.recognition.continuous = false; AppManager.recognition.interimResults = true; AppManager.recognition.start(); } catch(e){} } 
             },
             startCall: function() { 
                 this.callStatus.textContent = 'Dialing...'; this.dialingScreen.classList.add('hidden'); this.inCallScreen.classList.remove('hidden'); this.inCallScreen.classList.add('flex'); 
