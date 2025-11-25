@@ -9,6 +9,9 @@
     <link rel="manifest" href="/First-Aid-Training-Suite/manifest.json">
     <link rel="canonical" href="https://szd0320.github.io/First-Aid-Training-Suite/" />
     
+    <!-- PDF Generation Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    
     <!-- iOS Support -->
     <link rel="apple-touch-icon" href="icon-192.png">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -64,12 +67,21 @@
         @keyframes typing-bounce { 0%, 60%, 100% { transform: translateY(0); } 30% { transform: translateY(-6px); } }
         .selection-button { color: white; font-weight: bold; padding: 1.5rem; border-radius: 1rem; transition: all 0.2s; width: 100%; max-width: 400px; text-align: center; transform: scale(1); box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
         .selection-button:hover { transform: scale(1.02); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
+        
+        /* Transcript Modal */
+        #transcript-modal { background-color: rgba(0,0,0,0.8); backdrop-filter: blur(5px); }
+        .transcript-row { border-bottom: 1px solid #e5e7eb; padding: 8px 0; font-size: 14px; }
+        .transcript-row:last-child { border-bottom: none; }
+        .t-sender { font-weight: bold; width: 80px; flex-shrink: 0; }
+        .t-operator { color: #2563eb; }
+        .t-user { color: #16a34a; }
+        .t-system { color: #ca8a04; font-style: italic; }
     </style>
 </head>
 <body class="bg-gray-100 text-gray-800">
 
     <!-- Build Number -->
-    <div class="fixed bottom-2 left-2 text-xs text-gray-400 font-mono z-50 pointer-events-none">v2.14</div>
+    <div class="fixed bottom-2 left-2 text-xs text-gray-400 font-mono z-50 pointer-events-none">v3.1.1</div>
 
     <!-- 1. Master Selection Screen -->
     <div id="master-selection-screen" class="flex flex-col items-center justify-center min-h-screen p-6 bg-gray-50">
@@ -88,9 +100,8 @@
         </div>
     </div>
 
-    <!-- 2. Scenario App Container -->
+    <!-- 2. Scenario App Container (Hidden) -->
     <div id="scenario-app-wrapper" class="hidden flex items-center justify-center min-h-screen p-4">
-        <!-- (Scenario App Content Hidden) -->
         <div id="app" class="w-full max-w-2xl mx-auto bg-white rounded-2xl shadow-xl p-6 md:p-8 relative overflow-hidden h-[90vh] flex flex-col">
             <div id="scenario-main-menu" class="fade-in flex-grow flex flex-col justify-center">
                 <button onclick="AppManager.goHome()" class="mt-8 text-gray-500 hover:text-gray-700 font-medium py-2 px-4 rounded-lg self-center">← Back to Main Menu</button>
@@ -101,6 +112,7 @@
 
     <!-- 3. Operator App Container -->
     <div id="operator-app-wrapper" class="hidden flex flex-col items-center justify-center min-h-screen p-4">
+        <!-- Control Bar Outside Phone -->
         <div class="w-full max-w-sm mx-auto mb-4 px-4 py-3 bg-white rounded-xl shadow-sm border border-gray-200 flex items-center justify-between">
             <span class="text-sm font-semibold text-gray-600">Call Speed</span>
             <div class="flex items-center space-x-3 w-1/2">
@@ -123,6 +135,7 @@
             <div id="callScreen" class="flex-grow flex flex-col justify-between text-center p-4 mt-2 relative z-10">
                 <div id="support-banner" class="hidden flex-shrink-0 bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-2 mb-2 rounded-md">Voice Not Supported</div>
                 
+                <!-- Dialing Screen -->
                 <div id="dialing-screen" class="flex flex-col items-center justify-center h-full pb-12">
                     <div class="flex flex-col items-center w-full">
                         <div class="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mb-6 shadow-inner">
@@ -138,11 +151,15 @@
                     </div>
                 </div>
     
+                <!-- In-Call Screen -->
                 <div id="in-call-screen" class="hidden h-full flex-col absolute top-0 left-0 w-full h-full in-call-bg pt-10 px-4 pb-8">
+                    <!-- Header Controls -->
                     <div class="flex-shrink-0 flex justify-between items-center pb-4 border-b border-gray-600/30 mb-2 w-full">
                         <button onclick="AppManager.goHome()" class="text-xs text-gray-400 hover:text-white flex items-center px-2 py-1 rounded hover:bg-white/10 transition"><svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>Home</button>
+                        <button onclick="OperatorApp.showTranscript()" class="text-xs text-blue-300 hover:text-white px-2">Transcript</button>
                         <button onclick="OperatorApp.endCallHandler()" class="text-xs bg-gray-700/50 hover:bg-gray-600 text-white px-3 py-1 rounded-full border border-gray-600">Reset</button>
                     </div>
+                    <!-- Call Status -->
                     <div class="flex-shrink-0 pt-1 text-center">
                            <div class="w-20 h-20 bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-3 shadow-lg">
                                 <svg class="w-10 h-10 text-gray-300" fill="currentColor" viewBox="0 0 20 20"><path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z"></path></svg>
@@ -150,7 +167,9 @@
                            <div class="text-2xl font-bold text-white mb-0.5 tracking-wide">Emergency</div>
                            <div class="text-gray-400 text-sm font-mono" id="call-timer">00:00</div>
                     </div>
+                    <!-- Chat Area -->
                     <div id="conversation-log" class="flex-grow my-4 overflow-y-auto glass-panel p-4 space-y-4 text-left shadow-inner"></div>
+                    <!-- Controls -->
                     <div class="flex-shrink-0 w-full mb-24 relative z-30">
                         <div id="voice-status" class="flex items-center justify-center text-xs text-gray-400 mb-2"><span id="mic-status-text">Tap button to speak</span></div>
                         <button id="ptt-override-btn" class="w-full p-4 bg-blue-600 text-white rounded-2xl font-bold flex items-center justify-center space-x-2 transition transform active:scale-95 mb-3 hidden disabled:opacity-50 shadow-lg border border-blue-500/50">
@@ -159,12 +178,30 @@
                         </button>
                         <div id="user-options" class="space-y-2"></div>
                     </div>
+                    <!-- End Button -->
                     <div class="absolute bottom-8 left-0 w-full flex justify-center z-40">
                          <button id="end-call-btn" class="w-20 h-20 bg-red-500 text-white rounded-full flex items-center justify-center transition transform active:scale-90 shadow-xl border-4 border-red-900/30 hidden">
                              <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M1.885.511a1.745 1.745 0 0 1 2.61.163L6.29 2.98c.329.423.445.974.28 1.464l-2.094 2.094a.25.25 0 0 0 .022.286l3.523 3.523a.25.25 0 0 0 .286.022l2.094-2.094c.49-.165 1.041-.049 1.464.28l2.298 2.298c.33.33.465.81.314 1.256l-1.096 2.296a.25.25 0 0 1-.286.223c-2.327-.375-4.497-1.63-6.23-3.366C3.375 9.47 2.115 7.302 1.74 4.975a.25.25 0 0 1 .223-.286l2.296-1.096c.446-.15.926-.015 1.256.314L5.163 5.48z" transform="rotate(135 8 8)"/></svg>
                          </button>
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Transcript Modal -->
+    <div id="transcript-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl w-full max-w-lg max-h-[80vh] flex flex-col shadow-2xl">
+            <div class="p-4 border-b border-gray-200 flex justify-between items-center bg-gray-50 rounded-t-xl">
+                <h3 class="font-bold text-lg">Call Transcript</h3>
+                <button onclick="document.getElementById('transcript-modal').classList.add('hidden')" class="text-gray-500 hover:text-gray-800 text-2xl">&times;</button>
+            </div>
+            <div id="transcript-content" class="flex-grow overflow-y-auto p-4 space-y-2"></div>
+            <div class="p-4 border-t border-gray-200 bg-gray-50 rounded-b-xl flex justify-between">
+                <button onclick="document.getElementById('transcript-modal').classList.add('hidden')" class="text-gray-600 font-semibold px-4 py-2">Close</button>
+                <button onclick="OperatorApp.generatePDF()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-4 py-2 rounded-lg flex items-center">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg> Export PDF
+                </button>
             </div>
         </div>
     </div>
@@ -207,7 +244,7 @@
         };
 
         const OperatorApp = {
-            callStatus: null, dialingScreen: null, inCallScreen: null, conversationLog: null, userOptions: null, callTimerDisplay: null, startCallBtn: null, endCallBtn: null, micIcon: null, micStatusText: null, pttOverrideBtn: null, pttText: null, speedSlider: null, speedValueDisplay: null, callTimer: null, seconds: 0, currentNodeId: 'start', finalTranscript: "", audioCtx: null, operatorTypingTimeout: null, handlerRate: 1.0, speechEndTimeout: null, currentETA: null, capturedData: {}, currentUtterance: null, retryCount: 0,
+            callStatus: null, dialingScreen: null, inCallScreen: null, conversationLog: null, userOptions: null, callTimerDisplay: null, startCallBtn: null, endCallBtn: null, micIcon: null, micStatusText: null, pttOverrideBtn: null, pttText: null, speedSlider: null, speedValueDisplay: null, callTimer: null, seconds: 0, currentNodeId: 'start', finalTranscript: "", audioCtx: null, operatorTypingTimeout: null, handlerRate: 1.0, speechEndTimeout: null, currentETA: null, capturedData: {}, currentUtterance: null, retryCount: 0, history: [],
             
             script: {
                 'start_call': { operator: "Hello, emergency service operator. Which service do you require? Fire, police or ambulance?", listen: true, keywords: {"ambulance": "connect_ambulance", "police": "connect_police", "fire": "connect_fire"} },
@@ -235,7 +272,7 @@
                 'poisoning_q1': { operator: "Is she responsive?", listen: true, default: "poisoning_q2" },
                 'poisoning_q2': { operator: "Can I speak to her?", listen: true, default: "poisoning_q3" },
                 'poisoning_q3': { operator: "Why is that?", listen: true, default: "poisoning_q4" },
-                'poisoning_q4': { operator: "Can she be woken up?", listen: true, default: "poisoning_q5" },
+                'poisoning_q4': { operator: "Can she be woken up?", listen: true, keywords: {"yes": "poisoning_q5"}, default: "poisoning_q5" },
                 'poisoning_q5': { operator: "Is she fighting desperately for every breath?", listen: true, default: "poisoning_q6" },
                 'poisoning_q6': { operator: "But she is awake?", listen: true, default: "poisoning_q7" },
                 'poisoning_q7': { operator: "What tablets has she taken?", listen: true, default: "poisoning_q8" },
@@ -345,46 +382,66 @@
                     const node = this.script[this.currentNodeId]; 
                     if (node && node.listen === true && AppManager.recognition) { 
                         this.finalTranscript = ''; 
-                        setTimeout(() => { try { AppManager.recognition.start(); } catch(e) { console.error("Rec start error", e); } }, 100);
+                        // Longer delay before listening again (2s)
+                        setTimeout(() => {
+                            try {
+                                AppManager.recognition.continuous = false; 
+                                AppManager.recognition.interimResults = true; 
+                                AppManager.recognition.start(); 
+                            } catch(e) { console.error("Rec start error", e); }
+                        }, 2000);
                     } else if (node && node.listen === false && node.next) { 
                         setTimeout(() => this.transitionToNode(node.next), 500); 
                     } 
                 };
                 setTimeout(() => { if (AppManager.synth.speaking) { } else if (!AppManager.isListening && this.currentUtterance) { if(this.currentUtterance.onend) this.currentUtterance.onend(); } }, (text.length * 100) + 2000); 
                 if (this.selectedVoice) this.currentUtterance.voice = this.selectedVoice; 
-                this.currentUtterance.rate = this.handlerRate; this.currentUtterance.pitch = 1.05; 
+                this.currentUtterance.rate = this.handlerRate; 
+                this.currentUtterance.pitch = 1.05; 
                 AppManager.synth.speak(this.currentUtterance); 
             },
-            toggleListening: function() { if (!AppManager.recognition) return; if (AppManager.isListening) { AppManager.recognition.stop(); } else { if (AppManager.synth.speaking) AppManager.synth.cancel(); this.finalTranscript = ''; try { AppManager.recognition.start(); } catch (error) {} } },
+            toggleListening: function() { if (!AppManager.recognition) return; if (AppManager.isListening) { AppManager.recognition.stop(); } else { if (AppManager.synth.speaking) AppManager.synth.cancel(); this.finalTranscript = ''; try { AppManager.recognition.continuous = false; AppManager.recognition.interimResults = true; AppManager.recognition.start(); } catch (error) {} } },
             handleVoiceCommand: function(command) { 
                 if(this.currentNodeId === 'ambulance_address') this.capturedData['address'] = command;
                 if(this.currentNodeId === 'take_number') this.capturedData['phone'] = command;
                 const node = this.script[this.currentNodeId]; 
-                this.addMessage(`[Heard: "${command}"]`, 'system'); // Debug visual feedback
+                // Log System logic
+                this.history.push({ sender: 'system', text: `Processing input: "${command}" against node: ${this.currentNodeId}`, timestamp: new Date() });
                 this.addMessage(command, 'user'); 
+                
                 let nextNodeId = null; 
                 const options = node.options || []; const keywords = node.keywords || {}; 
                 const matchedOption = options.find(opt => command.includes(opt.text.toLowerCase().replace(/[,.]/g, ''))); 
-                if (matchedOption) nextNodeId = matchedOption.next; else { for (const keyword in keywords) { if (command.includes(keyword)) { nextNodeId = keywords[keyword]; break; } } } 
+                
+                if (matchedOption) {
+                    nextNodeId = matchedOption.next; 
+                } else { 
+                    for (const keyword in keywords) { 
+                        if (command.includes(keyword)) { 
+                            nextNodeId = keywords[keyword]; 
+                            // Visual feedback for logic
+                            this.addMessage(`[Detected "${keyword}" → Switching Protocol]`, 'system');
+                            this.history.push({ sender: 'system', text: `Keyword matched: "${keyword}" -> Transitioning to ${nextNodeId}`, timestamp: new Date() });
+                            break; 
+                        } 
+                    } 
+                } 
+                
                 if (!nextNodeId && node.default) nextNodeId = node.default; 
+                
                 if (nextNodeId) {
                     setTimeout(() => this.transitionToNode(nextNodeId, command), 200);
-                } else {
-                    // Retry logic if nothing matched
-                    this.retryCount++;
-                    if (this.retryCount < 3) {
-                       // Silent retry or prompt? Let's just restart listener for now
-                       setTimeout(() => { try { AppManager.recognition.start(); } catch(e){} }, 500);
-                    } else {
-                       this.addMessage("I'm having trouble hearing you. Please press the button to try again.", 'system');
-                       this.retryCount = 0;
-                    }
-                }
+                } else if (AppManager.recognition) { 
+                    // Retry logic
+                    this.finalTranscript = ''; 
+                    setTimeout(() => { try { AppManager.recognition.continuous = false; AppManager.recognition.interimResults = true; AppManager.recognition.start(); } catch(e){} }, 200);
+                } 
             },
             startCall: function() { 
                 this.ensureAudioContext(); 
                 this.callStatus.textContent = 'Dialing...'; this.dialingScreen.classList.add('hidden'); this.inCallScreen.classList.remove('hidden'); this.inCallScreen.classList.add('flex'); 
-                this.startCallBtn.classList.add('hidden'); this.endCallBtn.classList.remove('hidden');
+                this.startCallBtn.classList.add('hidden'); 
+                this.endCallBtn.classList.remove('hidden');
                 this.playSound('dial', () => { this.callStatus.textContent = 'Ringing...'; this.playSound('ring', () => { this.callStatus.textContent = 'Connecting...'; setTimeout(() => { this.startTimer(); this.showNode('start_call'); this.pttOverrideBtn.classList.remove('hidden'); this.pttOverrideBtn.disabled = false; }, 1000); }); }); },
             endCall: function() { this.endCallHandler(); },
             startTimer: function() { this.seconds = 0; this.callTimerDisplay.textContent = '00:00'; clearInterval(this.callTimer); this.callTimer = setInterval(() => { this.seconds++; const mins = String(Math.floor(this.seconds / 60)).padStart(2, '0'); const secs = String(this.seconds % 60).padStart(2, '0'); this.callTimerDisplay.textContent = `${mins}:${secs}`; }, 1000); },
@@ -392,14 +449,23 @@
             removeTypingIndicator: function() { const i = document.getElementById('typing-indicator'); if (i) i.parentElement.remove(); },
             addMessage: function(text, sender, eta) { 
                 clearTimeout(this.operatorTypingTimeout); this.removeTypingIndicator(); 
+                
+                // Add to history
+                this.history.push({ sender, text, timestamp: new Date() });
+
                 const messageDiv = document.createElement('div'); const wrapper = document.createElement('div'); 
                 if (sender.startsWith('system')) { messageDiv.className = 'w-full max-w-xs text-center p-2 rounded-lg bg-gray-100 text-gray-600 border border-gray-200 font-semibold text-sm'; messageDiv.textContent = text + (eta ? ` (ETA: ${eta})` : ''); wrapper.className = 'w-full flex justify-center'; } 
-                else { messageDiv.className = `p-3 rounded-2xl max-w-xs shadow-sm text-sm ${sender === 'operator' ? 'bg-gray-700 text-white' : 'bg-blue-600 text-white text-right'}`; messageDiv.textContent = text.charAt(0).toUpperCase() + text.slice(1); wrapper.className = `w-full flex ${sender === 'operator' ? 'justify-start' : 'justify-end'}`; } 
+                else { 
+                    messageDiv.className = `p-3 rounded-2xl max-w-xs shadow-sm text-sm ${sender === 'operator' ? 'bg-gray-700 text-white' : 'bg-blue-600 text-white text-right'}`; 
+                    messageDiv.textContent = text.charAt(0).toUpperCase() + text.slice(1); 
+                    wrapper.className = `w-full flex ${sender === 'operator' ? 'justify-start' : 'justify-end'}`; 
+                } 
                 wrapper.appendChild(messageDiv); this.conversationLog.appendChild(wrapper); this.conversationLog.scrollTop = this.conversationLog.scrollHeight; if (sender === 'operator') this.speakText(text); 
             },
             showNode: function(nodeId) { 
                 if (nodeId === 'end_call_final') { this.addMessage(this.script[nodeId].operator, 'operator'); this.endCall(); return; } 
                 this.currentNodeId = nodeId; const node = this.script[nodeId]; if(!node) return; clearTimeout(this.operatorTypingTimeout); 
+                
                 if (node.systemMessage) { 
                     let etaVal = ""; 
                     if (nodeId.includes('dispatch')) { const minutes = this.getRandomETA(8, 15); etaVal = `${minutes} Minutes`; if(!this.currentETA) this.currentETA = minutes; } 
@@ -408,7 +474,9 @@
                     return; 
                 } 
                 this.showTypingIndicator(); 
-                const delay = 800 + Math.random() * 500; this.playTypingSound(delay);
+                // Increased delay for "Thinking" feeling (1.5s - 2.5s)
+                const delay = 1500 + Math.random() * 1000; 
+                this.playTypingSound(delay);
                 this.operatorTypingTimeout = setTimeout(() => { 
                     if (node.operator) {
                         let text = node.operator;
@@ -426,9 +494,46 @@
             setupInitialScreen: function() { 
                 this.callStatus.textContent = 'Ready to Call'; this.startCallBtn.disabled = false; this.endCallBtn.classList.add('hidden'); this.startCallBtn.classList.remove('hidden'); this.seconds = 0; this.callTimerDisplay.textContent = '00:00'; this.currentNodeId = 'start'; this.finalTranscript = ""; 
                 this.inCallScreen.classList.add('hidden'); this.inCallScreen.classList.remove('flex'); 
-                this.dialingScreen.classList.remove('hidden'); this.conversationLog.innerHTML = ''; this.userOptions.innerHTML = ''; this.pttOverrideBtn.classList.add('hidden'); this.pttOverrideBtn.disabled = true; this.capturedData = {}; this.retryCount = 0;
+                this.dialingScreen.classList.remove('hidden'); this.conversationLog.innerHTML = ''; this.userOptions.innerHTML = ''; this.pttOverrideBtn.classList.add('hidden'); this.pttOverrideBtn.disabled = true; this.capturedData = {}; this.history = [];
             },
-            checkBrowserSupport: function() { const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition; if (!SpeechRec) { this.supportBanner.classList.remove('hidden'); this.micIcon.classList.add('text-gray-400'); } }
+            checkBrowserSupport: function() { const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition; if (!SpeechRec) { this.supportBanner.classList.remove('hidden'); this.micIcon.classList.add('text-gray-400'); } },
+            showTranscript: function() {
+                const modal = document.getElementById('transcript-modal');
+                const content = document.getElementById('transcript-content');
+                content.innerHTML = '';
+                this.history.forEach(item => {
+                    const row = document.createElement('div');
+                    row.className = 'transcript-row flex';
+                    row.innerHTML = `<div class="t-sender t-${item.sender}">${item.sender.toUpperCase()}</div><div class="flex-grow">${item.text}</div>`;
+                    content.appendChild(row);
+                });
+                modal.classList.remove('hidden');
+            },
+            generatePDF: function() {
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF();
+                let y = 10;
+                doc.setFontSize(16);
+                doc.text("Call Simulation Transcript", 10, y);
+                y += 10;
+                doc.setFontSize(10);
+                doc.text(`Date: ${new Date().toLocaleString()}`, 10, y);
+                y += 10;
+                doc.setLineWidth(0.5);
+                doc.line(10, y, 200, y);
+                y += 10;
+                
+                this.history.forEach(item => {
+                    if (y > 280) { doc.addPage(); y = 10; }
+                    doc.setFont("helvetica", "bold");
+                    doc.text(`${item.sender.toUpperCase()}:`, 10, y);
+                    doc.setFont("helvetica", "normal");
+                    const splitText = doc.splitTextToSize(item.text, 150);
+                    doc.text(splitText, 40, y);
+                    y += (splitText.length * 5) + 5;
+                });
+                doc.save("Call_Transcript.pdf");
+            }
         };
 
         document.addEventListener('DOMContentLoaded', () => { AppManager.init(); });
