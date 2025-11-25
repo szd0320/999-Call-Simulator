@@ -345,17 +345,7 @@
             getRandomETA: function(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; },
             ensureAudioContext: function() { if (!this.audioCtx) { try { this.audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { console.error("Audio Context not supported"); return false; } } if (this.audioCtx.state === 'suspended') this.audioCtx.resume(); return this.audioCtx.state === 'running'; },
             playTypingSound: function(duration) {
-                if(!this.ensureAudioContext()) return;
-                const startTime = this.audioCtx.currentTime;
-                const endTime = startTime + (duration / 1000);
-                const createClick = (time) => {
-                    const osc = this.audioCtx.createOscillator(); const gain = this.audioCtx.createGain();
-                    osc.type = 'triangle'; osc.frequency.value = 2000 + Math.random() * 500;
-                    gain.gain.setValueAtTime(0.02, time); gain.gain.exponentialRampToValueAtTime(0.001, time + 0.05);
-                    osc.connect(gain); gain.connect(this.audioCtx.destination);
-                    osc.start(time); osc.stop(time + 0.05);
-                };
-                for (let t = startTime; t < endTime; t += (0.05 + Math.random() * 0.15)) { createClick(t); }
+                // Removed Background Typing as per request
             },
             playSound: function(type, callback) { 
                 let duration = 0; if (type === 'dial') duration = 1500; if (type === 'ring') duration = 3000; 
@@ -373,7 +363,18 @@
                     if (callback) setTimeout(callback, duration); 
                 } 
             },
-            loadVoices: function() { const voices = AppManager.synth.getVoices(); this.selectedVoice = voices.find(v => v.name.includes('Google UK English Female')) || voices.find(v => v.name.includes('Google US English')) || voices.find(v => v.lang === 'en-GB' && v.name.includes('Female')) || voices.find(v => v.lang === 'en-GB') || voices.find(v => v.lang.startsWith('en-')) || null; },
+            loadVoices: function() { 
+                const voices = AppManager.synth.getVoices(); 
+                // Updated priority for high quality voices
+                this.selectedVoice = voices.find(v => v.name.includes('Google UK English Female')) 
+                    || voices.find(v => v.name.includes('Daniel'))
+                    || voices.find(v => v.name.includes('Samantha'))
+                    || voices.find(v => v.name.includes('Google US English')) 
+                    || voices.find(v => v.lang === 'en-GB' && v.name.includes('Female')) 
+                    || voices.find(v => v.lang === 'en-GB') 
+                    || voices.find(v => v.lang.startsWith('en-')) 
+                    || null; 
+            },
             speakText: function(text) { 
                 if (this.currentUtterance) this.currentUtterance.onend = null;
                 if (AppManager.synth.speaking) AppManager.synth.cancel(); 
@@ -382,22 +383,25 @@
                     const node = this.script[this.currentNodeId]; 
                     if (node && node.listen === true && AppManager.recognition) { 
                         this.finalTranscript = ''; 
-                        // Longer delay before listening again (2s)
+                        // 1 second safety buffer before listening
                         setTimeout(() => {
                             try {
                                 AppManager.recognition.continuous = false; 
                                 AppManager.recognition.interimResults = true; 
                                 AppManager.recognition.start(); 
                             } catch(e) { console.error("Rec start error", e); }
-                        }, 2000);
+                        }, 1000);
                     } else if (node && node.listen === false && node.next) { 
                         setTimeout(() => this.transitionToNode(node.next), 500); 
                     } 
                 };
-                setTimeout(() => { if (AppManager.synth.speaking) { } else if (!AppManager.isListening && this.currentUtterance) { if(this.currentUtterance.onend) this.currentUtterance.onend(); } }, (text.length * 100) + 2000); 
+                
+                // Increased failsafe timeout
+                setTimeout(() => { if (AppManager.synth.speaking) { } else if (!AppManager.isListening && this.currentUtterance) { if(this.currentUtterance.onend) this.currentUtterance.onend(); } }, (text.length * 200) + 4000); 
+                
                 if (this.selectedVoice) this.currentUtterance.voice = this.selectedVoice; 
                 this.currentUtterance.rate = this.handlerRate; 
-                this.currentUtterance.pitch = 1.05; 
+                this.currentUtterance.pitch = 1.0; // Reset pitch to neutral for less robotic sound
                 AppManager.synth.speak(this.currentUtterance); 
             },
             toggleListening: function() { if (!AppManager.recognition) return; if (AppManager.isListening) { AppManager.recognition.stop(); } else { if (AppManager.synth.speaking) AppManager.synth.cancel(); this.finalTranscript = ''; try { AppManager.recognition.continuous = false; AppManager.recognition.interimResults = true; AppManager.recognition.start(); } catch (error) {} } },
@@ -476,7 +480,7 @@
                 this.showTypingIndicator(); 
                 // Increased delay for "Thinking" feeling (1.5s - 2.5s)
                 const delay = 1500 + Math.random() * 1000; 
-                this.playTypingSound(delay);
+                // this.playTypingSound(delay); // REMOVED
                 this.operatorTypingTimeout = setTimeout(() => { 
                     if (node.operator) {
                         let text = node.operator;
