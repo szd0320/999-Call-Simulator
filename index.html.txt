@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>First-Aid Training Suite</title>
+    
+    <!-- PWA Manifest Link -->
+    <link rel="manifest" href="manifest.json">
+    
+    <!-- iOS Support -->
+    <link rel="apple-touch-icon" href="icon-192.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#1f2937">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* Global Styles */
+        body { font-family: 'Inter', sans-serif; touch-action: manipulation; overscroll-behavior-y: none; background-color: #f3f4f6; }
+
+        /* --- Scenario App Styles --- */
+        .fade-in { animation: fadeIn 0.5s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .chat-bubble { max-width: 80%; word-wrap: break-word; }
+        .chat-bubble-casualty { background-color: #e5e7eb; color: #1f2937; }
+        .chat-bubble-aider { background-color: #3b82f6; color: white; }
+        .scenario-pulse { animation: scenarioPulse 1.5s infinite; }
+        @keyframes scenarioPulse { 0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); } 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); } }
+        #trainer-panel { transition: transform 0.3s ease-in-out; }
+        .avpu-button.active { background-color: #1d4ed8; color: white; }
+
+        /* --- Operator App Styles --- */
+        .phone-frame {
+            border: 14px solid #1f2937; /* Dark bezel */
+            border-radius: 2.5rem; /* Rounded phone corners */
+            overflow: hidden;
+            position: relative;
+            background-color: #ffffff; /* Default screen bg */
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04), inset 0 0 0 2px #000;
+        }
+        /* Notch simulation */
+        .phone-notch {
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 40%;
+            height: 24px;
+            background-color: #1f2937;
+            border-bottom-left-radius: 12px;
+            border-bottom-right-radius: 12px;
+            z-index: 20;
+        }
+
+        /* In-Call Dark Mode Theme */
+        .in-call-bg {
+            background: linear-gradient(180deg, #1a202c 0%, #2d3748 100%);
+            color: white;
+        }
+        
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 1rem;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        @keyframes operatorPulse { 0%, 100% { transform: scale(1); opacity: 0.7; } 50% { transform: scale(1.1); opacity: 1; } }
+        .mic-listening { animation: operatorPulse 1.5s infinite; color: #ef4444; }
+        
+        /* Typing Indicator */
+        .typing-indicator span { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background-color: #9ca3af; animation: typing-bounce 1.2s infinite ease-in-out; }
+        .in-call-bg .typing-indicator span { background-color: #e2e8f0; } /* Lighter dots on dark bg */
+        .typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
+        .typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes typing-bounce { 0%, 60%, 100% { transform: translateY(0); } 30% { transform: translateY(-6px); } }
+
+        /* --- Selection Screen --- */
+        .selection-button { color: white; font-weight: bold; padding: 1.5rem; border-radius: 1rem; transition: all 0.2s; width: 100%; max-width: 400px; text-align: center; transform: scale(1); box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
+        .selection-button:hover { transform: scale(1.02); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-800">
+
+    <!-- 1. Master Selection Screen -->
+    <div id="master-selection-screen" class="flex flex-col items-center justify-center min-h-screen p-6 bg-gray-50">
+        <div class="w-full max-w-md text-center">
+            <h1 class="text-4xl font-extrabold text-gray-900 mb-2 tracking-tight">First Aid Training</h1>
+            <p class="text-gray-500 mb-10">Select a training module to begin.</p>
+            <div class="grid grid-cols-1 gap-6">
+                <button onclick="AppManager.launchScenarioApp()" class="selection-button bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white">
+                    <div class="text-xl">Scenario Simulator</div>
+                    <div class="text-sm opacity-90 font-normal mt-1">Practice AVPU & Treatments</div>
+                </button>
+                <button onclick="AppManager.launchOperatorApp()" class="selection-button bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white">
+                    <div class="text-xl">999 Call Operator</div>
+                    <div class="text-sm opacity-90 font-normal mt-1">Practice Emergency Calls</div>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. Scenario App Container -->
+    <div id="scenario-app-wrapper" class="hidden flex items-center justify-center min-h-screen p-4">
+        <div id="app" class="w-full max-w-2xl mx-auto bg-white rounded-2xl shadow-xl p-6 md:p-8 relative overflow-hidden h-[90vh] flex flex-col">
+            
+            <!-- Scenario Main Menu -->
+            <div id="scenario-main-menu" class="fade-in flex-grow flex flex-col justify-center">
+                <h2 class="text-2xl font-bold text-center text-gray-900 mb-2">Select Scenario</h2>
+                <p class="text-center text-gray-500 mb-8">Choose an emergency situation.</p>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <button onclick="ScenarioApp.startScenario('head')" class="bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 font-semibold py-4 px-6 rounded-xl transition">Head Injury</button>
+                    <button onclick="ScenarioApp.startScenario('spinal')" class="bg-green-50 hover:bg-green-100 text-green-700 border border-green-200 font-semibold py-4 px-6 rounded-xl transition">Spinal Injury</button>
+                    <button onclick="ScenarioApp.startScenario('crush')" class="bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 font-semibold py-4 px-6 rounded-xl transition">Crush Injury</button>
+                    <button onclick="ScenarioApp.startScenario('abdominal')" class="bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200 font-semibold py-4 px-6 rounded-xl transition">Abdominal Injury</button>
+                </div>
+                <button onclick="AppManager.goHome()" class="mt-8 text-gray-500 hover:text-gray-700 font-medium py-2 px-4 rounded-lg self-center">← Back to Main Menu</button>
+                 <div id="unsupported-browser" class="hidden mt-6 text-center text-xs text-red-600 bg-red-50 p-2 rounded-lg">Note: Voice features work best in Chrome.</div>
+            </div>
+            
+            <!-- Scenario Active View -->
+            <div id="scenario-view" class="hidden fade-in flex flex-col h-full">
+                <div class="flex justify-between items-center mb-4 border-b pb-3">
+                    <h2 id="scenario-title" class="text-xl font-bold text-gray-900"></h2>
+                    <div class="flex items-center space-x-2">
+                        <button onclick="ScenarioApp.toggleTrainerPanel()" class="text-xs bg-yellow-100 text-yellow-800 hover:bg-yellow-200 font-semibold py-1.5 px-3 rounded-lg border border-yellow-300">Trainer</button>
+                        <button onclick="ScenarioApp.endCurrentScenario()" class="text-xs bg-gray-100 text-gray-600 hover:bg-gray-200 font-semibold py-1.5 px-3 rounded-lg border border-gray-300">End</button>
+                    </div>
+                </div>
+                
+                <div id="persona-details-container" class="bg-blue-50 p-4 rounded-lg border border-blue-100 mb-4 hidden text-xs">
+                    <h3 class="font-semibold text-blue-800 mb-2">Casualty Info</h3>
+                    <div id="persona-details" class="grid grid-cols-2 gap-2"></div>
+                </div>
+                
+                <!-- Chat Area -->
+                <div id="interaction-view" class="flex-grow flex flex-col min-h-0">
+                    <div id="chat-log" class="flex-grow overflow-y-auto p-4 bg-gray-50 rounded-lg border border-gray-200 space-y-3 mb-4"></div>
+                    
+                    <!-- Controls -->
+                    <div id="action-panel" class="flex-shrink-0">
+                        <div class="flex items-center bg-white border border-gray-200 rounded-full p-2 shadow-sm">
+                            <div id="mic-indicator" class="bg-gray-300 text-white rounded-full p-2 mr-3 transition-all">
+                                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M7 4a3 3 0 016 0v6a3 3 0 11-6 0V4z"/></svg>
+                            </div>
+                            <p id="user-prompt" class="text-sm text-gray-600 font-medium flex-grow truncate">Ready...</p>
+                            <button id="push-to-talk" onclick="ScenarioApp.startListening()" class="bg-blue-600 hover:bg-blue-700 text-white rounded-full p-3 shadow-md transition-transform active:scale-95">
+                                 <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20"><path d="M7 4a3 3 0 016 0v6a3 3 0 11-6 0V4z"/><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM2 10a2 2 0 114 0v1a2 2 0 11-4 0v-1zM14 11a2 2 0 100-4v-1a2 2 0 100 4v1z" clip-rule="evenodd"/></svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+    
+                <div id="scenario-summary" class="hidden flex-col h-full justify-center text-center">
+                    <div class="mb-auto mt-10">
+                        <div class="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                        </div>
+                        <h3 class="text-2xl font-bold text-gray-900 mb-2">Scenario Complete</h3>
+                        <div class="bg-blue-50 p-6 rounded-xl border border-blue-200 text-left max-w-md mx-auto">
+                            <h4 class="font-semibold text-blue-900 mb-3 border-b border-blue-200 pb-2">Learning Points</h4>
+                            <ul id="summary-list" class="space-y-3 text-sm text-blue-800"></ul>
+                        </div>
+                    </div>
+                     <button onclick="ScenarioApp.endCurrentScenario()" class="w-full bg-gray-800 hover:bg-gray-900 text-white font-bold py-4 px-6 rounded-xl transition mt-6">Return to Menu</button>
+                </div>
+    
+                <div id="ai-section" class="mt-4 pt-4 border-t border-gray-200">
+                    <button id="ask-ai-button" onclick="ScenarioApp.askAI()" class="w-full bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 font-medium py-2 px-4 rounded-lg transition flex items-center justify-center text-sm">
+                       <svg class="w-4 h-4 mr-2 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        AI Guidance: When to call 999?
+                    </button>
+                    <div id="ai-response-container" class="mt-2 hidden text-sm bg-gray-50 p-3 rounded-lg border border-gray-200">
+                        <div id="ai-loading" class="flex items-center text-gray-500"><svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>Analyzing...</div>
+                        <div id="ai-response" class="text-gray-800"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Side Panel (Trainer) -->
+            <div id="trainer-panel" class="absolute top-0 right-0 h-full w-full md:w-80 bg-gray-900 text-white p-6 transform translate-x-full z-20 transition-transform duration-300 shadow-2xl">
+                <div class="flex justify-between items-center mb-8">
+                    <h3 class="text-xl font-bold">Trainer Controls</h3>
+                    <button onclick="ScenarioApp.toggleTrainerPanel()" class="text-gray-400 hover:text-white text-2xl">&times;</button>
+                </div>
+                <div class="mb-8">
+                    <h4 class="text-sm uppercase tracking-wider text-gray-500 font-bold mb-3">Casualty AVPU</h4>
+                    <div id="avpu-controls" class="grid grid-cols-2 gap-3">
+                        <button onclick="ScenarioApp.changeAVPU('A')" data-avpu="A" class="avpu-button bg-gray-800 border border-gray-700 hover:border-blue-500 text-sm py-3 rounded-lg transition">Alert</button>
+                        <button onclick="ScenarioApp.changeAVPU('V')" data-avpu="V" class="avpu-button bg-gray-800 border border-gray-700 hover:border-blue-500 text-sm py-3 rounded-lg transition">Voice</button>
+                        <button onclick="ScenarioApp.changeAVPU('P')" data-avpu="P" class="avpu-button bg-gray-800 border border-gray-700 hover:border-blue-500 text-sm py-3 rounded-lg transition">Pain</button>
+                        <button onclick="ScenarioApp.changeAVPU('U')" data-avpu="U" class="avpu-button bg-gray-800 border border-gray-700 hover:border-red-500 text-sm py-3 rounded-lg transition">Unresp.</button>
+                    </div>
+                </div>
+                <div>
+                    <h4 class="text-sm uppercase tracking-wider text-gray-500 font-bold mb-3">Scenario Info</h4>
+                    <div id="trainer-info" class="space-y-3 text-sm text-gray-300"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3. Operator App Container -->
+    <div id="operator-app-wrapper" class="hidden flex flex-col items-center justify-center min-h-screen p-4">
+        <div class="w-full max-w-sm mx-auto mb-4 px-4 py-3 bg-white rounded-xl shadow-sm border border-gray-200 flex items-center justify-between">
+            <span class="text-sm font-semibold text-gray-600">Call Speed</span>
+            <div class="flex items-center space-x-3 w-1/2">
+                <span class="text-xs text-gray-400">Slow</span>
+                <input type="range" id="speed-slider" min="0.5" max="1.5" value="1.0" step="0.05" class="w-full h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600">
+                <span class="text-xs text-gray-400">Fast</span>
+            </div>
+        </div>
+        
+        <!-- Phone Frame -->
+        <div class="w-full max-w-sm mx-auto phone-frame flex flex-col" style="height: 80vh; max-height: 720px;">
+            <div class="phone-notch"></div>
+            
+            <!-- Phone Top Bar -->
+            <div class="flex justify-between items-center text-xs font-medium px-6 pt-3 pb-2 z-30 relative text-gray-800" id="status-bar">
+                <span id="currentTime">12:00</span>
+                <div class="flex items-center space-x-1.5">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16"><path d="M15.384 6.115a.485.485 0 0 0-.047-.736C12.522 3.251 8.82 2 5.12 2S-2.282 3.252.123 5.379a.485.485 0 0 0-.048.736.518.518 0 0 0 .732.05c2.72-2.312 6.1-3.14 9.4-2.43a.518.518 0 0 0 .517-.05c2.72-2.312 6.1-3.14 9.4-2.43a.518.518 0 0 0 .732.05L15.384 6.115zM12.02 8.83a.485.485 0 0 0-.047-.736C10.048 6.51 7.208 6 4.368 6c-2.84 0-5.68.51-7.652 2.094a.485.485 0 0 0-.048.736.518.518 0 0 0 .732.05c2-1.7 4.56-2.4 7.04-1.76a.518.518 0 0 0 .517-.05c2-1.7 4.56-2.4 7.04-1.76a.518.518 0 0 0 .732.05L12.02 8.83z"/><path d="M9.898 11.545a.485.485 0 0 0-.047-.736C8.86 10.01 7.208 9.5 5.568 9.5c-1.64 0-3.292.51-4.28 1.31a.485.485 0 0 0-.048.736.518.518 0 0 0 .732.05c.9-.75 2.24-1.21 3.6-1.02a.518.518 0 0 0 .517-.05c.9-.75 2.24-1.21 3.6-1.02a.518.518 0 0 0 .732.05zM7.768 14.26a.485.485 0 0 0-.047-.736C7.246 13.01 6.448 12.5 5.648 12.5c-.8 0-1.6.51-2.072 1.024a.485.485 0 0 0-.048.736.518.518 0 0 0 .732.05c.4-.333.92-.524 1.39-.524s.99.191 1.39.524a.518.518 0 0 0 .732.05z"/></svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M2 6h10v4H2V6z"/><path d="M2 4a2 2 0 0 0-2 2v4a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2H2zm13 1a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1h-1v-4h1z"/></svg>
+                </div>
+            </div>
+    
+            <!-- Main Screen Content -->
+            <div id="callScreen" class="flex-grow flex flex-col justify-between text-center p-4 mt-2 relative z-10">
+                <div id="support-banner" class="hidden flex-shrink-0 bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-2 mb-2 rounded-md">Voice Not Supported</div>
+                
+                <!-- Dialing Screen (Light Mode) -->
+                <div id="dialing-screen" class="flex flex-col items-center justify-center h-full pb-12">
+                    <div class="flex flex-col items-center w-full">
+                        <div class="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mb-6 shadow-inner">
+                            <svg class="w-12 h-12 text-gray-300" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"></path></svg>
+                        </div>
+                        <div class="text-5xl font-light text-gray-900 mb-2 tracking-tight">999</div>
+                        <div id="call-status" class="text-green-600 font-medium">Emergency Services</div>
+                        
+                        <div class="mt-auto pt-4 w-full absolute bottom-10 left-0 flex justify-center">
+                             <!-- Answer Button (Green) -->
+                             <button id="start-call-btn" class="w-20 h-20 bg-green-500 text-white rounded-full flex items-center justify-center shadow-xl border-4 border-green-100 transition transform active:scale-90">
+                                 <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" fill="currentColor" viewBox="0 0 16 16">
+                                     <path fill-rule="evenodd" d="M1.885.511a1.745 1.745 0 0 1 2.61.163L6.29 2.98c.329.423.445.974.28 1.464l-2.094 2.094a.25.25 0 0 0 .022.286l3.523 3.523a.25.25 0 0 0 .286.022l2.094-2.094c.49-.165 1.041-.049 1.464.28l2.298 2.298c.33.33.465.81.314 1.256l-1.096 2.296a.25.25 0 0 1-.286.223c-2.327-.375-4.497-1.63-6.23-3.366C3.375 9.47 2.115 7.302 1.74 4.975a.25.25 0 0 1 .223-.286l2.296-1.096c.446-.15.926-.015 1.256.314L5.163 5.48z"/>
+                                 </svg>
+                             </button>
+                        </div>
+                    </div>
+                </div>
+    
+                <!-- In-Call Screen (Dark Mode) -->
+                <div id="in-call-screen" class="hidden h-full flex-col absolute top-0 left-0 w-full h-full in-call-bg pt-10 px-4 pb-8">
+                    <!-- Header Controls -->
+                    <div class="flex-shrink-0 flex justify-between items-center pb-4 border-b border-gray-600/30 mb-2 w-full">
+                        <button onclick="AppManager.goHome()" class="text-xs text-gray-400 hover:text-white flex items-center px-2 py-1 rounded hover:bg-white/10 transition"><svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>Home</button>
+                        <button onclick="OperatorApp.endCallHandler()" class="text-xs bg-gray-700/50 hover:bg-gray-600 text-white px-3 py-1 rounded-full border border-gray-600">Reset</button>
+                    </div>
+
+                    <!-- Contact Info -->
+                    <div class="flex-shrink-0 pt-1 text-center">
+                           <div class="w-20 h-20 bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-3 shadow-lg">
+                                <svg class="w-10 h-10 text-gray-300" fill="currentColor" viewBox="0 0 20 20"><path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z"></path></svg>
+                           </div>
+                           <div class="text-2xl font-bold text-white mb-0.5 tracking-wide">Emergency</div>
+                           <div class="text-gray-400 text-sm font-mono" id="call-timer">00:00</div>
+                    </div>
+                    
+                    <!-- Dynamic Chat Log -->
+                    <div id="conversation-log" class="flex-grow my-4 overflow-y-auto glass-panel p-4 space-y-4 text-left shadow-inner"></div>
+                    
+                    <!-- User Interaction Area -->
+                    <div class="flex-shrink-0 w-full mb-24 relative z-30">
+                        <div id="voice-status" class="flex items-center justify-center text-xs text-gray-400 mb-2">
+                            <span id="mic-status-text">Tap button to speak</span>
+                        </div>
+                        <button id="ptt-override-btn" class="w-full p-4 bg-blue-600 text-white rounded-2xl font-bold flex items-center justify-center space-x-2 transition transform active:scale-95 mb-3 hidden disabled:opacity-50 shadow-lg border border-blue-500/50">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 16 16"><path d="M5 3a3 3 0 0 1 6 0v5a3 3 0 0 1-6 0V3z"/><path d="M3.5 6.5A.5.5 0 0 1 4 7v1a4 4 0 0 0 8 0V7a.5.5 0 0 1 1 0v1a5 5 0 0 1-4.5 4.975V15h3a.5.5 0 0 1 0 1h-7a.5.5 0 0 1 0-1h3v-2.025A5 5 0 0 1 3 8V7a.5.5 0 0 1 .5-.5z"/></svg>
+                            <span id="ptt-text">Push to Speak</span>
+                        </button>
+                        <div id="user-options" class="space-y-2"></div>
+                    </div>
+    
+                    <!-- End Button (Absolute Positioned) -->
+                    <div class="absolute bottom-8 left-0 w-full flex justify-center z-40">
+                         <button id="end-call-btn" class="w-20 h-20 bg-red-500 text-white rounded-full flex items-center justify-center transition transform active:scale-90 shadow-xl border-4 border-red-900/30 hidden">
+                             <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" viewBox="0 0 16 16">
+                                 <path fill-rule="evenodd" d="M1.885.511a1.745 1.745 0 0 1 2.61.163L6.29 2.98c.329.423.445.974.28 1.464l-2.094 2.094a.25.25 0 0 0 .022.286l3.523 3.523a.25.25 0 0 0 .286.022l2.094-2.094c.49-.165 1.041-.049 1.464.28l2.298 2.298c.33.33.465.81.314 1.256l-1.096 2.296a.25.25 0 0 1-.286.223c-2.327-.375-4.497-1.63-6.23-3.366C3.375 9.47 2.115 7.302 1.74 4.975a.25.25 0 0 1 .223-.286l2.296-1.096c.446-.15.926-.015 1.256.314L5.163 5.48z" transform="rotate(135 8 8)"/> 
+                             </svg>
+                         </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const AppManager = {
+            currentApp: null, masterScreen: null, scenarioWrapper: null, operatorWrapper: null, recognition: null, isListening: false, synth: window.speechSynthesis,
+            init: function() {
+                this.masterScreen = document.getElementById('master-selection-screen');
+                this.scenarioWrapper = document.getElementById('scenario-app-wrapper');
+                this.operatorWrapper = document.getElementById('operator-app-wrapper');
+                ScenarioApp.initDOM(); OperatorApp.initDOM(); this.setupSpeechRecognition();
+                
+                // Service Worker Registration (Commented out for preview environment)
+                /*
+                if ('serviceWorker' in navigator) {
+                    navigator.serviceWorker.register('sw.js')
+                    .then(reg => console.log('Service Worker registered', reg))
+                    .catch(err => console.error('Service Worker registration failed', err));
+                }
+                */
+            },
+            launchScenarioApp: function() { this.masterScreen.classList.add('hidden'); this.operatorWrapper.classList.add('hidden'); this.scenarioWrapper.classList.remove('hidden'); this.scenarioWrapper.classList.add('flex'); this.currentApp = 'scenario'; ScenarioApp.start(); },
+            launchOperatorApp: function() { this.masterScreen.classList.add('hidden'); this.scenarioWrapper.classList.add('hidden'); this.scenarioWrapper.classList.remove('flex'); this.operatorWrapper.classList.remove('hidden'); this.operatorWrapper.classList.add('flex'); this.currentApp = 'operator'; OperatorApp.start(); },
+            goHome: function() { if (this.currentApp === 'scenario') ScenarioApp.shutdown(); else if (this.currentApp === 'operator') OperatorApp.shutdown(); if (this.synth.speaking) this.synth.cancel(); if (this.recognition && this.isListening) this.recognition.stop(); this.isListening = false; this.operatorWrapper.classList.add('hidden'); this.operatorWrapper.classList.remove('flex'); this.scenarioWrapper.classList.add('hidden'); this.scenarioWrapper.classList.remove('flex'); this.masterScreen.classList.remove('hidden'); this.currentApp = null; },
+            setupSpeechRecognition: function() {
+                const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                if (SpeechRecognition) {
+                    this.recognition = new SpeechRecognition(); this.recognition.lang = 'en-GB';
+                    this.recognition.onstart = () => { this.isListening = true; if (this.currentApp === 'scenario') ScenarioApp.onRecStart(); else if (this.currentApp === 'operator') OperatorApp.onRecStart(); };
+                    this.recognition.onend = () => { this.isListening = false; if (this.currentApp === 'scenario') ScenarioApp.onRecEnd(); else if (this.currentApp === 'operator') OperatorApp.onRecEnd(); };
+                    this.recognition.onresult = (event) => { if (this.currentApp === 'scenario') ScenarioApp.handleVoiceResult(event); else if (this.currentApp === 'operator') OperatorApp.handleVoiceResult(event); };
+                    this.recognition.onerror = (event) => { if (this.currentApp === 'scenario') ScenarioApp.onRecError(event); else if (this.currentApp === 'operator') OperatorApp.onRecError(event); };
+                } else { document.getElementById('unsupported-browser')?.classList.remove('hidden'); document.getElementById('support-banner')?.classList.remove('hidden'); }
+            }
+        };
+
+        const ScenarioApp = {
+            scenarios: {
+                head: { title: 'Head Injury', persona: { 'Name': 'Alex Chen', 'Age': '28', 'Incident': 'Loose rock hit head while hiking.', 'Symptoms': 'Headache, dizzy, confused.' }, learningPoints: [ "Raise head/shoulders.", "Cold compress.", "Monitor for worsening." ], aiContext: "Head injury without spinal/bleeding.", interaction: [ { type: 'start', prompt: "You find Alex sitting dazed. Say \"I'm a first aider\".", options: [{ text: "Hi, I'm a first aider.", next: 1, keywords: ["first aider"] }] }, { type: 'casualty', responses: {'A':"Rock hit my head...", 'V':"Mmmph...", 'P':"*Groans*", 'U':"*Silence*"}, next: 2 }, { type: 'aider', prompt: "Action? (e.g. 'lie down')", options: [ { text: "Lie down, head raised.", next: 3, keywords: ['lie', 'head'] }, { text: "Check breathing.", next: 3, keywords: ['breathing'] } ]}, { type: 'casualty', responses: {'A': "Better...", 'V': "Mmm...", 'P': "*Groans*", 'U': "*Breathing normal*"}, next: 4 }, { type: 'aider', prompt: "Action?", options: [{ text: "Cold compress.", next: 5, keywords: ['cold', 'compress'] }] }, { type: 'casualty', responses: {'A': "Thanks.", 'V': "Thanks...", 'P': "*Silence*", 'U': "*Silence*"}, next: 6 }, { type: 'aider', prompt: "Action?", options: [{ text: "Monitor and advise medical help.", next: 7, keywords: ['monitor', 'medical'] }] }, { type: 'end', text: "Scenario complete." } ] },
+                spinal: { title: 'Spinal Injury', persona: { 'Name': 'Ben', 'Age': '45', 'Incident': 'Fell from roof.', 'Symptoms': 'Back pain, no feeling in legs.' }, learningPoints: [ "Don't move casualty.", "Call 999.", "Support head/neck." ], aiContext: "Suspected spinal injury.", interaction: [ { type: 'start', prompt: "Ben fell from a roof. Say \"I'm a first aider\".", options: [{ text: "Hi, stay still. I'm a first aider.", next: 1, keywords: ["first aider"] }] }, { type: 'casualty', responses: {'A': "Can't feel legs...", 'V': "Back hurts...", 'P': "*Groans*", 'U':"*Unresponsive*"}, next: 2 }, { type: 'aider', prompt: "Next step?", options: [{ text: "Call 999, suspect spinal.", next: 3, keywords: ['call', '999', 'spinal'] }] }, { type: 'casualty', responses: {'A': "I'm scared.", 'V': "Scared...", 'P': "*Moans*", 'U': "*Silence*"}, next: 4 }, { type: 'aider', prompt: "While waiting?", options: [{ text: "Support head, keep still.", next: 5, keywords: ['support', 'head'] }] }, { type: 'end', text: "Scenario complete." } ] },
+                crush: { title: 'Crush Injury', persona: { 'Name': 'Maria', 'Age': '34', 'Incident': 'Leg pinned by trailer >15m.', 'Symptoms': 'Agony, faint, cold.' }, learningPoints: [ "Don't remove object >15m.", "Treat shock.", "Call 999." ], aiContext: "Crush injury >15 mins.", interaction: [ { type: 'start', prompt: "Maria's leg is pinned. Say \"I'm a first aider\".", options: [{ text: "Hi, don't move. I'm help.", next: 1, keywords: ["first aider"] }] }, { type: 'casualty', responses: {'A':"Trapped for ages...", 'V':"Stuck...", 'P':"*Screams*", 'U':"*Unresponsive*"}, next: 2 }, { type: 'aider', prompt: "Priority?", options: [{ text: "Don't move trailer. Call 999.", next: 3, keywords: ['not move', 'call', '999'] }] }, { type: 'casualty', responses: {'A':"Get it off!", 'V':"Get off...", 'P':"*Cries*", 'U':"*Silence*"}, next: 4 }, { type: 'aider', prompt: "While waiting?", options: [{ text: "Keep warm, stay.", next: 5, keywords: ['warm', 'stay'] }] }, { type: 'end', text: "Scenario complete." } ] },
+                abdominal: { title: 'Abdominal Injury', persona: { 'Name': 'Leo', 'Age': '10', 'Incident': 'Fell on branch.', 'Symptoms': 'Stomach pain, branch embedded.' }, learningPoints: [ "Don't remove object.", "Dress around object.", "Call 999." ], aiContext: "Impaled object abdominal.", interaction: [ { type: 'start', prompt: "Leo has a branch in his stomach. Say \"I'm a first aider\".", options: [{ text: "Hi, don't move.", next: 1, keywords: ["first aider"] }] }, { type: 'casualty', responses: {'A':"Hurts...", 'V':"Hurts...", 'P':"*Cries*", 'U':"*Unresponsive*"}, next: 2 }, { type: 'aider', prompt: "Action?", options: [{ text: "Call 999. Leave branch.", next: 3, keywords: ['call', '999', 'leave'] }] }, { type: 'casualty', responses: {'A':"Cold...", 'V':"Cold...", 'P':"*Shivers*", 'U':"*Silence*"}, next: 4 }, { type: 'aider', prompt: "Help?", options: [{ text: "Dress around branch.", next: 5, keywords: ['dressing', 'around'] }] }, { type: 'end', text: "Scenario complete." } ] }
+            },
+            currentScenario: null, currentStep: 0, casualtyState: { responsiveness: 'A' }, scenarioTimer: null,
+            // DOM Refs
+            mainMenu: null, scenarioView: null, scenarioTitle: null, personaDetailsContainer: null, personaDetails: null, chatLog: null, userPrompt: null, micIndicator: null, trainerPanel: null, trainerInfo: null, avpuControls: null, interactionView: null, aiSection: null, scenarioSummary: null, summaryList: null, pushToTalkButton: null,
+            
+            initDOM: function() {
+                this.mainMenu = document.getElementById('scenario-main-menu'); 
+                this.scenarioView = document.getElementById('scenario-view'); 
+                this.scenarioTitle = document.getElementById('scenario-title'); 
+                this.personaDetailsContainer = document.getElementById('persona-details-container'); 
+                this.personaDetails = document.getElementById('persona-details'); 
+                this.chatLog = document.getElementById('chat-log'); 
+                this.userPrompt = document.getElementById('user-prompt'); 
+                this.micIndicator = document.getElementById('mic-indicator'); 
+                this.trainerPanel = document.getElementById('trainer-panel'); 
+                this.trainerInfo = document.getElementById('trainer-info'); 
+                this.avpuControls = document.getElementById('avpu-controls'); 
+                this.interactionView = document.getElementById('interaction-view'); 
+                this.aiSection = document.getElementById('ai-section'); 
+                this.scenarioSummary = document.getElementById('scenario-summary'); 
+                this.summaryList = document.getElementById('summary-list'); 
+                this.pushToTalkButton = document.getElementById('push-to-talk');
+            },
+            start: function() { this.mainMenu.classList.remove('hidden'); this.scenarioView.classList.add('hidden'); },
+            shutdown: function() { 
+                if(this.scenarioTimer) clearTimeout(this.scenarioTimer); 
+                this.mainMenu.classList.add('hidden'); 
+                this.scenarioView.classList.add('hidden'); 
+                this.trainerPanel.classList.add('translate-x-full'); 
+                this.currentScenario = null; 
+                // Reset UI to initial state for next launch
+                document.getElementById('scenario-summary').classList.add('hidden');
+                document.getElementById('interaction-view').classList.remove('hidden');
+                document.getElementById('ai-section').classList.remove('hidden');
+            },
+            endCurrentScenario: function() { this.shutdown(); this.start(); },
+            startListening: function() { 
+                if (AppManager.synth.speaking) AppManager.synth.cancel(); 
+                if (AppManager.recognition && !AppManager.isListening) { 
+                    try { 
+                        const step = this.currentScenario.interaction[this.currentStep]; 
+                        if (step.type === 'start' || step.type === 'aider') { 
+                            this.userPrompt.textContent = "Listening..."; 
+                            AppManager.recognition.continuous = false; 
+                            AppManager.recognition.start(); 
+                        } 
+                    } catch(e) {} 
+                } 
+            },
+            onRecStart: function() { this.micIndicator.classList.add('scenario-pulse', 'bg-red-500'); this.micIndicator.classList.remove('bg-gray-300'); this.pushToTalkButton.classList.add('bg-red-600'); this.pushToTalkButton.disabled = true; },
+            onRecEnd: function() { this.micIndicator.classList.remove('scenario-pulse', 'bg-red-500'); this.micIndicator.classList.add('bg-gray-300'); this.pushToTalkButton.classList.remove('bg-red-600'); this.pushToTalkButton.disabled = false; },
+            onRecError: function(e) { this.userPrompt.textContent = "Mic error."; },
+            handleVoiceResult: function(event) {
+                const transcript = event.results[0][0].transcript.toLowerCase().trim();
+                const step = this.currentScenario.interaction[this.currentStep];
+                if (step.options) {
+                    for (const option of step.options) { for (const keyword of option.keywords) { if (transcript.includes(keyword)) { this.selectOption(option.text, option.next); return; } } }
+                }
+                this.userPrompt.textContent = "Try again."; setTimeout(() => { if(step.prompt) this.userPrompt.textContent = step.prompt; }, 2000);
+            },
+            selectOption: function(text, nextStep) { this.addChatMessage(text, 'aider'); this.currentStep = nextStep; this.renderInteractionStep(this.currentStep); },
+            addChatMessage: function(message, sender) {
+                const div = document.createElement('div');
+                if (sender.startsWith('system')) { div.className = 'text-center p-2 text-xs font-semibold text-gray-500 bg-gray-100 rounded-md'; div.innerHTML = `<p>${message}</p>`; }
+                else { div.className = `w-full flex ${sender === 'aider' ? 'justify-end' : 'justify-start'}`; div.innerHTML = `<div class="chat-bubble p-3 rounded-lg text-sm ${sender === 'aider' ? 'chat-bubble-aider' : 'chat-bubble-casualty'}">${message}</div>`; if (sender === 'casualty') this.speak(message, () => { if (this.currentScenario.interaction[this.currentStep].next) { this.currentStep = this.currentScenario.interaction[this.currentStep].next; this.renderInteractionStep(this.currentStep); } }); }
+                this.chatLog.appendChild(div); this.chatLog.scrollTop = this.chatLog.scrollHeight;
+            },
+            speak: function(text, cb) { if(AppManager.synth.speaking) AppManager.synth.cancel(); const u = new SpeechSynthesisUtterance(text); u.onend = cb; AppManager.synth.speak(u); },
+            startScenario: function(key) { this.currentScenario = this.scenarios[key]; this.currentStep = 0; this.mainMenu.classList.add('hidden'); this.scenarioView.classList.remove('hidden'); this.chatLog.innerHTML = ''; this.renderInteractionStep(0); },
+            renderInteractionStep: function(idx) { 
+                const step = this.currentScenario.interaction[idx]; 
+                if(step.prompt) this.userPrompt.textContent = step.prompt; 
+                if(step.type === 'casualty') this.addChatMessage(step.responses[this.casualtyState.responsiveness], 'casualty'); 
+                else if (step.type!=='end') setTimeout(() => this.startListening(), 1000); 
+                else { 
+                    this.addChatMessage(step.text, 'system'); 
+                    document.getElementById('scenario-summary').classList.remove('hidden'); 
+                    document.getElementById('interaction-view').classList.add('hidden'); 
+                    document.getElementById('ai-section').classList.add('hidden'); 
+                } 
+            },
+            toggleTrainerPanel: function() { document.getElementById('trainer-panel').classList.toggle('translate-x-full'); },
+            changeAVPU: function(l) { this.casualtyState.responsiveness = l; this.addChatMessage(`Casualty is now: ${l}`, 'system-info'); this.updateAVPUButtons(); },
+            updateAVPUButtons: function() { document.querySelectorAll('.avpu-button').forEach(b => b.classList.toggle('active', b.dataset.avpu === this.casualtyState.responsiveness)); },
+            askAI: async function() { /* AI logic */ }
+        };
+
+        const OperatorApp = {
+            callStatus: null, dialingScreen: null, inCallScreen: null, conversationLog: null, userOptions: null, callTimerDisplay: null, startCallBtn: null, endCallBtn: null, micIcon: null, micStatusText: null, pttOverrideBtn: null, pttText: null, speedSlider: null, speedValueDisplay: null, callTimer: null, seconds: 0, currentNodeId: 'start', finalTranscript: "", audioCtx: null, operatorTypingTimeout: null, handlerRate: 1.0, speechEndTimeout: null, currentETA: null, capturedData: {},
+            script: {
+                'start_call': { operator: "Hello, emergency service operator. Which service do you require? Fire, police or ambulance?", listen: true, keywords: {"ambulance": "connect_ambulance", "police": "connect_police", "fire": "connect_fire"} },
+                'connect_police': { operator: "Connecting to Police.", listen: false, next: 'end_call_final' },
+                'connect_fire': { operator: "Connecting to Fire Service.", listen: false, next: 'end_call_final' },
+                'connect_ambulance': { operator: "Connecting you now.", listen: false, next: 'ambulance_address' },
+                'ambulance_address': { operator: "Ambulance service, what’s the address of the emergency?", listen: true, default: 'address_confirm' },
+                'address_confirm': { operator: "Can you give me the full address again just to confirm?", listen: true, default: 'take_number' },
+                'take_number': { operator: "Can I take a contact telephone number please?", listen: true, default: 'ask_who' },
+                'ask_who': { operator: "Are you calling about yourself or someone else?", listen: true, default: 'ask_gender' },
+                'ask_gender': { operator: "Are they male or female?", listen: true, default: 'what_happened' },
+                'what_happened': { operator: "What’s happened today?", listen: true, keywords: { "wake": "unresponsive_q1", "passed out": "unresponsive_q1", "unresponsive": "unresponsive_q1", "tablets": "poisoning_q1", "pills": "poisoning_q1", "overdose": "poisoning_q1", "poison": "poisoning_q1", "stroke": "stroke_q1", "face": "stroke_q1", "slurred": "stroke_q1", "arm": "stroke_q1", "sting": "allergy_q1", "bee": "allergy_q1", "allergic": "allergy_q1", "swelling": "allergy_q1", "breathe": "allergy_q1" }, default: 'what_happened_retry' },
+                'what_happened_retry': { operator: "I didn't catch that. Can you tell me briefly what the main problem is?", listen: true, default: 'what_happened' },
+                'unresponsive_q1': { operator: "Is he responsive?", listen: true, keywords: {"no": "unresponsive_q2", "yes": "unresponsive_q2_yes"}, default: "unresponsive_q2" },
+                'unresponsive_q2': { operator: "Is he breathing normally?", listen: true, keywords: {"yes": "unresponsive_q3"}, default: "unresponsive_q3" },
+                'unresponsive_q3': { operator: "So he’s breathing nice and regularly?", listen: true, keywords: {"yes": "unresponsive_q4"}, default: "unresponsive_q4" },
+                'unresponsive_q4': { operator: "Is his breathing noisy?", listen: true, default: "dispatch_unresponsive" },
+                'dispatch_unresponsive': { systemMessage: "Dispatching Ambulance...", next: "unresponsive_scene_safe" },
+                'unresponsive_scene_safe': { operator: "The ambulance is being organised for you now. So the address we will be sending to is {address}. Can you confirm that's correct?", listen: true, next: "unresponsive_scene_safe_2" },
+                'unresponsive_scene_safe_2': { operator: "Is there any further info to help the crew? And is the scene safe?", listen: true, default: "unresponsive_advice_1" },
+                'unresponsive_advice_1': { operator: "The ambulance is on its way. I need you to gently turn him onto his side supporting his head, can you do that?", listen: true, default: "unresponsive_advice_2" },
+                'unresponsive_advice_2': { operator: "Well done. Stay with him and make sure he keeps breathing. Make sure he doesn't get too cold or overheated.", listen: false, next: "unresponsive_advice_3" },
+                'unresponsive_advice_3': { operator: "Keep an eye on him. If he develops new symptoms or gets worse, call 999 immediately. Is there anyone else to meet the vehicle?", listen: true, default: "unresponsive_end" },
+                'unresponsive_end': { operator: "Okay. Help is on the way. I'm going to leave you now.", listen: false, next: "end_call_final" },
+                'poisoning_q1': { operator: "Is she responsive?", listen: true, default: "poisoning_q2" },
+                'poisoning_q2': { operator: "Can I speak to her?", listen: true, keywords: {"no": "poisoning_q3"}, default: "poisoning_q3" },
+                'poisoning_q3': { operator: "Why is that?", listen: true, default: "poisoning_q4" },
+                'poisoning_q4': { operator: "Can she be woken up?", listen: true, keywords: {"yes": "poisoning_q5"}, default: "poisoning_q5" },
+                'poisoning_q5': { operator: "Is she fighting desperately for every breath?", listen: true, default: "poisoning_q6" },
+                'poisoning_q6': { operator: "But she is awake?", listen: true, default: "poisoning_q7" },
+                'poisoning_q7': { operator: "What tablets has she taken?", listen: true, default: "poisoning_q8" },
+                'poisoning_q8': { operator: "And how many has she taken?", listen: true, default: "poisoning_q9" },
+                'poisoning_q9': { operator: "Did she take them accidentally?", listen: true, default: "poisoning_q10" },
+                'poisoning_q10': { operator: "Has she coughed up any blood or been sick?", listen: true, default: "poisoning_q11" },
+                'poisoning_q11': { operator: "Does she seem confused or difficult to rouse?", listen: true, default: "dispatch_poisoning" },
+                'dispatch_poisoning': { systemMessage: "Dispatching Ambulance...", next: "poisoning_scene_safe" },
+                'poisoning_scene_safe': { operator: "The ambulance is being organised. So the address is {address}. Confirm?", listen: true, next: "poisoning_scene_safe_2" },
+                'poisoning_scene_safe_2': { operator: "Is there any further info? And is the scene safe?", listen: true, default: "poisoning_advice_1" },
+                'poisoning_advice_1': { operator: "Gather all medicines and packets in a bag to give to the crew. Can you do that?", listen: true, default: "poisoning_advice_2" },
+                'poisoning_advice_2': { operator: "Make sure she doesn't eat or drink. Keep her warm but not overheated. Stay with her.", listen: false, next: "poisoning_end" },
+                'poisoning_end': { operator: "Help is on the way. If she gets worse call 999 immediately.", listen: false, next: "end_call_final" },
+                'stroke_q1': { operator: "Is he responsive?", listen: true, default: "stroke_q2" },
+                'stroke_q2': { operator: "Is he breathing normally?", listen: true, default: "stroke_q3" },
+                'stroke_q3': { operator: "Has he lost a lot of blood recently?", listen: true, default: "stroke_q4" },
+                'stroke_q4': { operator: "Can I speak to him please?", listen: true, default: "stroke_q5" },
+                'stroke_q5': { operator: "But he is still responsive and breathing?", listen: true, default: "stroke_q6" },
+                'stroke_q6': { operator: "Is he very pale, blue or a deathly colour?", listen: true, default: "stroke_q7" },
+                'stroke_q7': { operator: "Has he got new difficulty raising both his arms?", listen: true, default: "stroke_q8" },
+                'stroke_q8': { operator: "You mentioned his speech was slurred. Is that normal for him?", listen: true, default: "stroke_q9" },
+                'stroke_q9': { operator: "Has he had a head injury in the last 7 days?", listen: true, default: "dispatch_stroke" },
+                'dispatch_stroke': { systemMessage: "Dispatching Ambulance...", next: "stroke_scene_safe" },
+                'stroke_scene_safe': { operator: "Ambulance is being organised. Address is {address}. Confirm?", listen: true, next: "stroke_scene_safe_2" },
+                'stroke_scene_safe_2': { operator: "Any further info? And is the scene safe?", listen: true, default: "stroke_advice_1" },
+                'stroke_advice_1': { operator: "Stay with him. If he becomes unresponsive, gently lay him down. Make sure he doesn't get too cold or hot.", listen: true, default: "stroke_end" },
+                'stroke_end': { operator: "Help is on the way. Call 999 immediately if he gets worse.", listen: false, next: "end_call_final" },
+                'allergy_q1': { operator: "Is he responsive?", listen: true, default: "allergy_q2" },
+                'allergy_q2': { operator: "Is he breathing?", listen: true, default: "allergy_q3" },
+                'allergy_q3': { operator: "Is he fighting desperately for every breath?", listen: true, default: "allergy_q4" },
+                'allergy_q4': { operator: "Does he have rapid swelling of the lips, face or throat?", listen: true, default: "dispatch_allergy" },
+                'dispatch_allergy': { systemMessage: "Dispatching Ambulance...", next: "allergy_scene_safe" },
+                'allergy_scene_safe': { operator: "Ambulance is being organised. Address is {address}. Confirm?", listen: true, next: "allergy_scene_safe_2" },
+                'allergy_scene_safe_2': { operator: "Any further info? And is the scene safe?", listen: true, default: "allergy_advice_1" },
+                'allergy_advice_1': { operator: "Does he have an epipen?", listen: true, default: "allergy_advice_2" },
+                'allergy_advice_2': { operator: "Do you have antihistamine?", listen: true, default: "allergy_advice_3" },
+                'allergy_advice_3': { operator: "Make sure he sits as upright as possible to help breathing. Stay with him.", listen: true, default: "allergy_end" },
+                'allergy_end': { operator: "Help is on the way. Call 999 immediately if he changes.", listen: false, next: "end_call_final" },
+                'end_call_final': { operator: "Call Ended.", listen: false }
+            },
+            initDOM: function() {
+                this.callStatus = document.getElementById('call-status'); this.dialingScreen = document.getElementById('dialing-screen'); this.inCallScreen = document.getElementById('in-call-screen'); this.conversationLog = document.getElementById('conversation-log'); this.userOptions = document.getElementById('user-options'); this.callTimerDisplay = document.getElementById('call-timer'); this.startCallBtn = document.getElementById('start-call-btn'); this.endCallBtn = document.getElementById('end-call-btn'); this.currentTimeDisplay = document.getElementById('currentTime'); this.micIcon = document.getElementById('mic-icon'); this.micStatusText = document.getElementById('mic-status-text'); this.supportBanner = document.getElementById('support-banner'); this.pttOverrideBtn = document.getElementById('ptt-override-btn'); this.pttText = document.getElementById('ptt-text'); this.speedSlider = document.getElementById('speed-slider'); this.speedValueDisplay = document.getElementById('speedValue');
+                this.startCallBtn.addEventListener('click', () => this.startCallHandler()); this.endCallBtn.addEventListener('click', () => this.endCallHandler()); this.pttOverrideBtn.addEventListener('click', () => this.toggleListening()); this.speedSlider.addEventListener('input', (e) => this.updateSpeed(e));
+                this.updateTime(); setInterval(() => this.updateTime(), 30000); this.checkBrowserSupport();
+            },
+            start: function() { this.setupInitialScreen(); },
+            shutdown: function() { clearInterval(this.callTimer); if (this.audioCtx && this.audioCtx.state !== 'closed') this.audioCtx.close().then(() => this.audioCtx = null); this.setupInitialScreen(); },
+            startCallHandler: function() { 
+                this.ensureAudioContext(); 
+                if (AppManager.synth.paused) AppManager.synth.resume(); 
+                if(AppManager.synth.getVoices().length === 0) AppManager.synth.onvoiceschanged = () => this.loadVoices(); else this.loadVoices(); 
+                this.startCallBtn.classList.add('hidden'); this.endCallBtn.classList.remove('hidden'); this.startCall(); 
+            },
+            endCallHandler: function() { clearInterval(this.callTimer); if (AppManager.synth.speaking) AppManager.synth.cancel(); if (AppManager.recognition && AppManager.isListening) AppManager.recognition.stop(); if (this.audioCtx && this.audioCtx.state !== 'closed') this.audioCtx.close().then(() => this.audioCtx = null); this.callStatus.textContent = 'Call Ended'; setTimeout(() => { this.shutdown(); }, 1500); },
+            updateSpeed: function(e) { this.handlerRate = parseFloat(e.target.value); },
+            onRecStart: function() { this.micIcon.classList.add('text-red-500', 'mic-listening'); this.micStatusText.textContent = 'Listening...'; this.pttOverrideBtn.classList.add('bg-red-600', 'border-red-600'); this.pttOverrideBtn.classList.remove('bg-blue-600', 'border-blue-500/50'); this.pttText.textContent = 'Listening... Tap to stop'; },
+            onRecEnd: function() { this.micIcon.classList.remove('text-red-500', 'mic-listening'); this.micStatusText.textContent = ''; this.pttOverrideBtn.classList.add('bg-blue-600', 'border-blue-500/50'); this.pttOverrideBtn.classList.remove('bg-red-600', 'border-red-600'); this.pttText.textContent = 'Push to Speak'; if (this.finalTranscript) this.handleVoiceCommand(this.finalTranscript.toLowerCase().trim()); },
+            onRecError: function(e) { console.error('Speech recognition error:', e.error); this.micStatusText.textContent = 'Mic error.'; },
+            handleVoiceResult: function(e) { clearTimeout(this.speechEndTimeout); let interimTranscript = ''; for (let i = e.resultIndex; i < e.results.length; ++i) { if (e.results[i].isFinal) { this.finalTranscript += e.results[i][0].transcript; AppManager.recognition.stop(); return; } else interimTranscript += e.results[i][0].transcript; } this.speechEndTimeout = setTimeout(() => { if (AppManager.isListening) { this.finalTranscript = interimTranscript; AppManager.recognition.stop(); } }, 1500); },
+            getRandomETA: function(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; },
+            ensureAudioContext: function() { if (!this.audioCtx) { try { this.audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { console.error("Audio Context not supported"); return false; } } if (this.audioCtx.state === 'suspended') this.audioCtx.resume(); return this.audioCtx.state === 'running'; },
+            playTypingSound: function(duration) {
+                if(!this.ensureAudioContext()) return;
+                const startTime = this.audioCtx.currentTime;
+                const endTime = startTime + (duration / 1000);
+                const createClick = (time) => {
+                    const osc = this.audioCtx.createOscillator(); const gain = this.audioCtx.createGain();
+                    osc.type = 'triangle'; osc.frequency.value = 2000 + Math.random() * 500;
+                    gain.gain.setValueAtTime(0.02, time); gain.gain.exponentialRampToValueAtTime(0.001, time + 0.05);
+                    osc.connect(gain); gain.connect(this.audioCtx.destination);
+                    osc.start(time); osc.stop(time + 0.05);
+                };
+                for (let t = startTime; t < endTime; t += (0.05 + Math.random() * 0.15)) { createClick(t); }
+            },
+            playSound: function(type, callback) { 
+                let duration = 0; if (type === 'dial') duration = 1500; if (type === 'ring') duration = 3000; 
+                if (!this.ensureAudioContext()) { if (callback) setTimeout(callback, duration); return; } 
+                if (type === 'dial') { 
+                    const o1 = this.audioCtx.createOscillator(), o2 = this.audioCtx.createOscillator(), g = this.audioCtx.createGain(); o1.type = 'sine'; o1.frequency.value = 350; o2.type = 'sine'; o2.frequency.value = 440; g.gain.value = 0.1; o1.connect(g); o2.connect(g); g.connect(this.audioCtx.destination); o1.start(); o2.start(); setTimeout(() => { o1.stop(); o2.stop(); if (callback) callback(); }, duration); 
+                } else if (type === 'ring') { 
+                    const osc = this.audioCtx.createOscillator(), gain = this.audioCtx.createGain(), modulator = this.audioCtx.createOscillator(), modGain = this.audioCtx.createGain();
+                    osc.type = 'square'; osc.frequency.value = 800; modulator.type = 'sine'; modulator.frequency.value = 25; modulator.connect(modGain); modGain.connect(gain.gain); osc.connect(gain); gain.connect(this.audioCtx.destination);
+                    const now = this.audioCtx.currentTime; gain.gain.setValueAtTime(0, now); gain.gain.linearRampToValueAtTime(0.2, now + 0.05); gain.gain.exponentialRampToValueAtTime(0.01, now + 2.0); osc.start(now); modulator.start(now); osc.stop(now + 2.5); modulator.stop(now + 2.5);
+                    setTimeout(() => { const osc2 = this.audioCtx.createOscillator(), gain2 = this.audioCtx.createGain(), modulator2 = this.audioCtx.createOscillator(), modGain2 = this.audioCtx.createGain(); osc2.type = 'square'; osc2.frequency.value = 800; modulator2.type = 'sine'; modulator2.frequency.value = 25; modulator2.connect(modGain2); modGain2.connect(gain2.gain); osc2.connect(gain2); gain2.connect(this.audioCtx.destination); const now2 = this.audioCtx.currentTime; gain2.gain.setValueAtTime(0, now2); gain2.gain.linearRampToValueAtTime(0.2, now2 + 0.05); gain2.gain.exponentialRampToValueAtTime(0.01, now2 + 2.0); osc2.start(now2); modulator2.start(now2); osc2.stop(now2 + 2.5); modulator2.stop(now2 + 2.5); }, 400);
+                    if (callback) setTimeout(callback, duration); 
+                } 
+            },
+            loadVoices: function() { const voices = AppManager.synth.getVoices(); this.selectedVoice = voices.find(v => v.name.includes('Google UK English Female')) || voices.find(v => v.name.includes('Google US English')) || voices.find(v => v.lang === 'en-GB' && v.name.includes('Female')) || voices.find(v => v.lang === 'en-GB') || voices.find(v => v.lang.startsWith('en-')) || null; },
+            speakText: function(text) { 
+                if (AppManager.synth.speaking) AppManager.synth.cancel(); 
+                const u = new SpeechSynthesisUtterance(text); 
+                u.onend = () => { 
+                    const node = this.script[this.currentNodeId]; 
+                    if (node && node.listen === true && AppManager.recognition) { this.finalTranscript = ''; AppManager.recognition.continuous = false; AppManager.recognition.interimResults = true; AppManager.recognition.start(); } else if (node && node.listen === false && node.next) { setTimeout(() => this.transitionToNode(node.next), 500); } 
+                }; 
+                if (this.selectedVoice) u.voice = this.selectedVoice; u.rate = this.handlerRate; u.pitch = 1.05; AppManager.synth.speak(u); 
+            },
+            toggleListening: function() { if (!AppManager.recognition) return; if (AppManager.isListening) { AppManager.recognition.stop(); } else { if (AppManager.synth.speaking) AppManager.synth.cancel(); this.finalTranscript = ''; try { AppManager.recognition.continuous = false; AppManager.recognition.interimResults = true; AppManager.recognition.start(); } catch (error) {} } },
+            handleVoiceCommand: function(command) { 
+                if(this.currentNodeId === 'ambulance_address') this.capturedData['address'] = command;
+                if(this.currentNodeId === 'take_number') this.capturedData['phone'] = command;
+                const node = this.script[this.currentNodeId]; if (!node || command === "") return; 
+                this.addMessage(command, 'user'); 
+                let nextNodeId = null; 
+                const options = node.options || []; const keywords = node.keywords || {}; 
+                const matchedOption = options.find(opt => command.includes(opt.text.toLowerCase().replace(/[,.]/g, ''))); 
+                if (matchedOption) nextNodeId = matchedOption.next; else { for (const keyword in keywords) { if (command.includes(keyword)) { nextNodeId = keywords[keyword]; break; } } } 
+                if (!nextNodeId && node.default) nextNodeId = node.default; 
+                if (nextNodeId) this.transitionToNode(nextNodeId, command); else if (AppManager.recognition) { this.finalTranscript = ''; AppManager.recognition.continuous = false; AppManager.recognition.interimResults = true; AppManager.recognition.start(); } 
+            },
+            startCall: function() { 
+                this.callStatus.textContent = 'Dialing...'; this.dialingScreen.classList.add('hidden'); this.inCallScreen.classList.remove('hidden'); this.inCallScreen.classList.add('flex'); 
+                this.startCallBtn.classList.add('hidden'); 
+                this.endCallBtn.classList.remove('hidden');
+                this.playSound('dial', () => { this.callStatus.textContent = 'Ringing...'; this.playSound('ring', () => { this.callStatus.textContent = 'Connecting...'; setTimeout(() => { this.startTimer(); this.showNode('start_call'); this.pttOverrideBtn.classList.remove('hidden'); this.pttOverrideBtn.disabled = false; }, 1000); }); }); },
+            endCall: function() { this.endCallHandler(); },
+            startTimer: function() { this.seconds = 0; this.callTimerDisplay.textContent = '00:00'; clearInterval(this.callTimer); this.callTimer = setInterval(() => { this.seconds++; const mins = String(Math.floor(this.seconds / 60)).padStart(2, '0'); const secs = String(this.seconds % 60).padStart(2, '0'); this.callTimerDisplay.textContent = `${mins}:${secs}`; }, 1000); },
+            showTypingIndicator: function() { const t = document.createElement('div'); t.id = 'typing-indicator'; t.className = 'p-2 rounded-lg bg-gray-200 self-start typing-indicator'; t.innerHTML = '<span></span><span></span><span></span>'; const w = document.createElement('div'); w.className = 'w-full flex justify-start'; w.appendChild(t); this.conversationLog.appendChild(w); this.conversationLog.scrollTop = this.conversationLog.scrollHeight; },
+            removeTypingIndicator: function() { const i = document.getElementById('typing-indicator'); if (i) i.parentElement.remove(); },
+            addMessage: function(text, sender, eta) { 
+                clearTimeout(this.operatorTypingTimeout); this.removeTypingIndicator(); 
+                const messageDiv = document.createElement('div'); const wrapper = document.createElement('div'); 
+                if (sender.startsWith('system')) { messageDiv.className = 'w-full max-w-xs text-center p-2 rounded-lg bg-gray-100 text-gray-600 border border-gray-200 font-semibold text-sm'; messageDiv.textContent = text + (eta ? ` (ETA: ${eta})` : ''); wrapper.className = 'w-full flex justify-center'; } 
+                else { 
+                    messageDiv.className = `p-3 rounded-2xl max-w-xs shadow-sm text-sm ${sender === 'operator' ? 'bg-gray-700 text-white' : 'bg-blue-600 text-white text-right'}`; 
+                    messageDiv.textContent = text.charAt(0).toUpperCase() + text.slice(1); 
+                    wrapper.className = `w-full flex ${sender === 'operator' ? 'justify-start' : 'justify-end'}`; 
+                } 
+                wrapper.appendChild(messageDiv); this.conversationLog.appendChild(wrapper); this.conversationLog.scrollTop = this.conversationLog.scrollHeight; if (sender === 'operator') this.speakText(text); 
+            },
+            showNode: function(nodeId) { 
+                if (nodeId === 'end_call_final') { this.addMessage(this.script[nodeId].operator, 'operator'); this.endCall(); return; } 
+                this.currentNodeId = nodeId; const node = this.script[nodeId]; if(!node) return; clearTimeout(this.operatorTypingTimeout); 
+                if (node.systemMessage) { 
+                    let etaVal = ""; 
+                    if (nodeId.includes('dispatch')) { const minutes = this.getRandomETA(8, 15); etaVal = `${minutes} Minutes`; if(!this.currentETA) this.currentETA = minutes; } 
+                    this.addMessage(node.systemMessage, `system-info`, etaVal); 
+                    if (node.next) setTimeout(() => this.showNode(node.next), 1500); 
+                    return; 
+                } 
+                this.showTypingIndicator(); 
+                const delay = 800 + Math.random() * 500; this.playTypingSound(delay);
+                this.operatorTypingTimeout = setTimeout(() => { 
+                    if (node.operator) {
+                        let text = node.operator;
+                        if(text.includes("{address}")) text = text.replace("{address}", this.capturedData['address'] || "the address you provided");
+                        if(nodeId.includes("scene_safe") && this.currentETA) text = text.replace("organised for you now", `organised. The ambulance is about ${this.currentETA} minutes away`);
+                        this.addMessage(text, 'operator'); 
+                    }
+                    this.userOptions.innerHTML = ''; 
+                    if (node.options && node.options.length > 0) { node.options.forEach(option => { const button = document.createElement('button'); button.textContent = option.text; button.className = "w-full text-left p-3 bg-blue-600 text-white rounded-xl font-semibold transition hover:bg-blue-500 active:scale-95 mb-2 text-sm"; button.onclick = () => this.selectOption(option); this.userOptions.appendChild(button); }); } 
+                }, delay); 
+            },
+            selectOption: function(option) { if (AppManager.synth.speaking) AppManager.synth.cancel(); if (AppManager.isListening) AppManager.recognition.stop(); this.addMessage(option.text, 'user'); this.userOptions.innerHTML = ''; this.transitionToNode(option.next); },
+            transitionToNode: function(nextNodeId, command = "") { this.showNode(nextNodeId); },
+            updateTime: function() { const now = new Date(); if (this.currentTimeDisplay) this.currentTimeDisplay.textContent = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`; },
+            setupInitialScreen: function() { 
+                this.callStatus.textContent = 'Ready to Call'; this.startCallBtn.disabled = false; this.endCallBtn.classList.add('hidden'); this.startCallBtn.classList.remove('hidden'); this.seconds = 0; this.callTimerDisplay.textContent = '00:00'; this.currentNodeId = 'start'; this.finalTranscript = ""; 
+                this.inCallScreen.classList.add('hidden'); this.inCallScreen.classList.remove('flex'); 
+                this.dialingScreen.classList.remove('hidden'); this.conversationLog.innerHTML = ''; this.userOptions.innerHTML = ''; this.pttOverrideBtn.classList.add('hidden'); this.pttOverrideBtn.disabled = true; this.capturedData = {}; 
+            },
+            checkBrowserSupport: function() { const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition; if (!SpeechRec) { this.supportBanner.classList.remove('hidden'); this.micIcon.classList.add('text-gray-400'); } }
+        };
+
+        document.addEventListener('DOMContentLoaded', () => { AppManager.init(); });
+    </script>
+</body>
+</html>
