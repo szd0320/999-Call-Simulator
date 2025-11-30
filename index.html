@@ -23,7 +23,43 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
 /* Global Styles */
-body { font-family: 'Inter', sans-serif; touch-action: manipulation; overscroll-behavior-y: none; background-color: #f3f4f6; }
+:root {
+    --font-scale: 1;
+    --bg-primary: #f3f4f6;
+    --text-primary: #1f2937;
+    --op-bg: linear-gradient(180deg, #1a202c 0%, #2d3748 100%);
+    --op-text: white;
+    --bubble-op: #374151;
+    --bubble-user: #2563eb;
+}
+
+/* Theme Classes */
+body.theme-high-contrast {
+    --op-bg: #000000;
+    --op-text: #ffff00;
+    --bubble-op: #000000;
+    --bubble-user: #ffff00;
+    --text-primary: #000000;
+    --bg-primary: #ffffff;
+}
+body.theme-high-contrast .glass-panel { background: #000; border: 2px solid white; }
+body.theme-high-contrast .chat-bubble { border: 1px solid white; }
+body.theme-high-contrast .text-blue-400 { color: #ffff00; }
+body.theme-high-contrast .text-green-400 { color: #00ff00; }
+
+body.theme-light {
+    --op-bg: #f3f4f6;
+    --op-text: #111827;
+    --bubble-op: #e5e7eb;
+    --bubble-user: #3b82f6;
+}
+
+body { font-family: 'Inter', sans-serif; touch-action: manipulation; overscroll-behavior-y: none; background-color: var(--bg-primary); color: var(--text-primary); }
+
+/* Font Scaling Utility */
+.font-scalable { font-size: calc(1rem * var(--font-scale)); }
+.font-scalable-sm { font-size: calc(0.875rem * var(--font-scale)); }
+.font-scalable-lg { font-size: calc(1.25rem * var(--font-scale)); }
 
 /* --- Scenario App Styles --- */
 .fade-in { animation: fadeIn 0.5s ease-in-out; }
@@ -44,8 +80,8 @@ body { font-family: 'Inter', sans-serif; touch-action: manipulation; overscroll-
     width: 100%; 
     display: flex; 
     flex-direction: column;
-    background: linear-gradient(180deg, #1a202c 0%, #2d3748 100%);
-    color: white; 
+    background: var(--op-bg);
+    color: var(--op-text); 
     position: fixed; 
     top: 0; 
     left: 0; 
@@ -83,28 +119,40 @@ body { font-family: 'Inter', sans-serif; touch-action: manipulation; overscroll-
 /* Fixed: Scrollbar styling for Conversation Log */
 .scrollbar-hidden::-webkit-scrollbar { display: none; }
 .scrollbar-hidden { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* Tutorial Styles */
+.tutorial-dot { width: 10px; height: 10px; border-radius: 50%; background-color: #4b5563; display: inline-block; margin: 0 4px; transition: background-color 0.3s; }
+.tutorial-dot.active { background-color: #2563eb; }
 </style>
 </head>
 <body class="bg-gray-100 text-gray-800">
 
 <!-- Build Number -->
-<div class="fixed bottom-2 left-2 text-xs text-gray-400 font-mono z-50 pointer-events-none select-none mix-blend-difference">v3.5.0 (Red Card)</div>
+<div class="fixed bottom-2 left-2 text-xs text-gray-400 font-mono z-50 pointer-events-none select-none mix-blend-difference">v3.6.0 (Tutorial & Settings)</div>
 
 <!-- 1. Master Selection Screen -->
 <div id="master-selection-screen" class="flex flex-col items-center justify-center min-h-screen p-6 bg-gray-50">
-<div class="w-full max-w-md text-center">
-<h1 class="text-4xl font-extrabold text-gray-900 mb-2 tracking-tight">First Aid Training</h1>
-<p class="text-gray-500 mb-10">Select a training module to begin.</p>
-<div class="grid grid-cols-1 gap-6">
-<button onclick="AppManager.launchScenarioApp()" class="selection-button bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white hidden">
-<div class="text-xl">Scenario Simulator</div>
-</button>
-<button onclick="AppManager.launchOperatorApp()" class="selection-button bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white">
-<div class="text-xl">999 Call Operator</div>
-<div class="text-sm opacity-90 font-normal mt-1">Practice Emergency Calls</div>
-</button>
-</div>
-</div>
+    <div class="absolute top-4 right-4 flex space-x-2">
+        <button onclick="SettingsManager.open()" class="p-2 bg-gray-200 rounded-full hover:bg-gray-300 transition text-gray-700">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+        </button>
+        <button onclick="TutorialManager.start()" class="p-2 bg-blue-100 text-blue-600 rounded-full hover:bg-blue-200 transition">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        </button>
+    </div>
+    <div class="w-full max-w-md text-center">
+        <h1 class="text-4xl font-extrabold text-gray-900 mb-2 tracking-tight">First Aid Training</h1>
+        <p class="text-gray-500 mb-10">Select a training module to begin.</p>
+        <div class="grid grid-cols-1 gap-6">
+            <button onclick="AppManager.launchScenarioApp()" class="selection-button bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white hidden">
+                <div class="text-xl">Scenario Simulator</div>
+            </button>
+            <button onclick="AppManager.launchOperatorApp()" class="selection-button bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white">
+                <div class="text-xl">999 Call Operator</div>
+                <div class="text-sm opacity-90 font-normal mt-1">Practice Emergency Calls</div>
+            </button>
+        </div>
+    </div>
 </div>
 
 <!-- 2. Scenario App Container (Hidden) -->
@@ -125,8 +173,9 @@ body { font-family: 'Inter', sans-serif; touch-action: manipulation; overscroll-
 <div class="flex justify-between items-center text-xs font-medium text-gray-300 mb-3 px-1 pt-2">
 <span id="currentTime">12:00</span>
 <div class="flex items-center space-x-1.5">
-<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16"><path d="M15.384 6.115a.485.485 0 0 0-.047-.736C12.522 3.251 8.82 2 5.12 2S-2.282 3.252.123 5.379a.485.485 0 0 0-.048.736.518.518 0 0 0 .732.05c2.72-2.312 6.1-3.14 9.4-2.43a.518.518 0 0 0 .517-.05c2.72-2.312 6.1-3.14 9.4-2.43a.518.518 0 0 0 .732.05L15.384 6.115zM12.02 8.83a.485.485 0 0 0-.047-.736C10.048 6.51 7.208 6 4.368 6c-2.84 0-5.68.51-7.652 2.094a.485.485 0 0 0-.048.736.518.518 0 0 0 .732.05c2-1.7 4.56-2.4 7.04-1.76a.518.518 0 0 0 .517-.05c2-1.7 4.56-2.4 7.04-1.76a.518.518 0 0 0 .732.05L12.02 8.83z"/><path d="M9.898 11.545a.485.485 0 0 0-.047-.736C8.86 10.01 7.208 9.5 5.568 9.5c-1.64 0-3.292.51-4.28 1.31a.485.485 0 0 0-.048.736.518.518 0 0 0 .732.05c.9-.75 2.24-1.21 3.6-1.02a.518.518 0 0 0 .517-.05c.9-.75 2.24-1.21 3.6-1.02a.518.518 0 0 0 .732.05zM7.768 14.26a.485.485 0 0 0-.047-.736C7.246 13.01 6.448 12.5 5.648 12.5c-.8 0-1.6.51-2.072 1.024a.485.485 0 0 0-.048.736.518.518 0 0 0 .732.05c.4-.333.92-.524 1.39-.524s.99.191 1.39.524a.518.518 0 0 0 .732.05z"/></svg>
-<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M2 6h10v4H2V6z"/><path d="M2 4a2 2 0 0 0-2 2v4a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2H2zm13 1a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1h-1v-4h1z"/></svg>
+    <button onclick="SettingsManager.open()" class="text-gray-400 hover:text-white"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg></button>
+    <button onclick="TutorialManager.start()" class="text-gray-400 hover:text-white"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></button>
+    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M2 6h10v4H2V6z"/><path d="M2 4a2 2 0 0 0-2 2v4a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2H2zm13 1a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1h-1v-4h1z"/></svg>
 </div>
 </div>
 <div class="flex justify-between items-center">
@@ -153,8 +202,8 @@ Voice recognition requires Chrome/Edge.
 <div class="w-32 h-32 bg-white/5 rounded-full flex items-center justify-center mb-8 border border-white/10 shadow-[0_0_40px_rgba(0,0,0,0.2)]">
 <svg class="w-16 h-16 text-white/40" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"></path></svg>
 </div>
-<div class="text-7xl font-light text-white mb-3 tracking-tight drop-shadow-lg">999</div>
-<div id="call-status" class="text-xl text-green-400 font-medium tracking-wide">Emergency Services</div>
+<div class="text-7xl font-light text-white mb-3 tracking-tight drop-shadow-lg font-scalable-lg">999</div>
+<div id="call-status" class="text-xl text-green-400 font-medium tracking-wide font-scalable">Emergency Services</div>
 <div class="mt-16">
 <button id="start-call-btn" class="w-24 h-24 bg-green-500 hover:bg-green-400 text-white rounded-full flex items-center justify-center shadow-[0_0_30px_rgba(34,197,94,0.4)] border-4 border-green-600/30 transition-all transform active:scale-95 animate-pulse">
 <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" fill="currentColor" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M1.885.511a1.745 1.745 0 0 1 2.61.163L6.29 2.98c.329.423.445.974.28 1.464l-2.094 2.094a.25.25 0 0 0 .022.286l3.523 3.523a.25.25 0 0 0 .286.022l2.094-2.094c.49-.165 1.041-.049 1.464.28l2.298 2.298c.33.33.465.81.314 1.256l-1.096 2.296a.25.25 0 0 1-.286.223c-2.327-.375-4.497-1.63-6.23-3.366C3.375 9.47 2.115 7.302 1.74 4.975a.25.25 0 0 1 .223-.286l2.296-1.096c.446-.15.926-.015 1.256.314L5.163 5.48z"/></svg>
@@ -173,7 +222,7 @@ Voice recognition requires Chrome/Edge.
 <svg class="w-6 h-6 text-gray-300" fill="currentColor" viewBox="0 0 20 20"><path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z"></path></svg>
 </div>
 <div>
-<div class="text-lg font-bold text-white leading-tight">Emergency</div>
+<div class="text-lg font-bold font-scalable leading-tight">Emergency</div>
 <div class="text-blue-400 text-xs font-mono" id="call-timer">00:00</div>
 </div>
 </div>
@@ -275,9 +324,167 @@ Use these to simulate sudden changes in patient condition.
 </div>
 </div>
 
+<!-- Settings Modal -->
+<div id="settings-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm modal-overlay">
+    <div class="bg-white rounded-xl w-full max-w-md shadow-2xl text-gray-800 overflow-hidden">
+        <div class="p-5 border-b border-gray-200 bg-gray-50 flex justify-between items-center">
+            <h3 class="font-bold text-xl">Settings</h3>
+            <button onclick="SettingsManager.close()" class="text-gray-400 hover:text-gray-800 text-2xl">&times;</button>
+        </div>
+        <div class="p-6 space-y-6">
+            <!-- Font Size -->
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-3">Font Size</label>
+                <div class="flex items-center justify-between space-x-2 bg-gray-100 p-1 rounded-lg">
+                    <button onclick="SettingsManager.setFontSize(0.85)" class="flex-1 py-2 rounded-md text-xs hover:bg-white hover:shadow transition">Small</button>
+                    <button onclick="SettingsManager.setFontSize(1.0)" class="flex-1 py-2 rounded-md text-sm hover:bg-white hover:shadow transition font-bold">Normal</button>
+                    <button onclick="SettingsManager.setFontSize(1.2)" class="flex-1 py-2 rounded-md text-base hover:bg-white hover:shadow transition">Large</button>
+                    <button onclick="SettingsManager.setFontSize(1.4)" class="flex-1 py-2 rounded-md text-lg hover:bg-white hover:shadow transition">XL</button>
+                </div>
+            </div>
+            
+            <!-- Theme -->
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-3">Theme</label>
+                <div class="grid grid-cols-1 gap-3">
+                    <button onclick="SettingsManager.setTheme('default')" class="w-full py-3 px-4 rounded-lg border border-gray-300 flex items-center hover:bg-gray-50">
+                        <div class="w-6 h-6 rounded-full bg-gray-800 mr-3 border border-gray-400"></div>
+                        <span>Standard Dark (Default)</span>
+                    </button>
+                    <button onclick="SettingsManager.setTheme('high-contrast')" class="w-full py-3 px-4 rounded-lg border border-gray-300 flex items-center hover:bg-gray-50 bg-black text-white">
+                        <div class="w-6 h-6 rounded-full bg-yellow-400 mr-3 border border-white"></div>
+                        <span class="text-yellow-300 font-bold">High Contrast</span>
+                    </button>
+                    <button onclick="SettingsManager.setTheme('light')" class="w-full py-3 px-4 rounded-lg border border-gray-300 flex items-center hover:bg-gray-50 bg-white">
+                        <div class="w-6 h-6 rounded-full bg-blue-100 mr-3 border border-blue-500"></div>
+                        <span>Light Mode</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Tutorial Modal -->
+<div id="tutorial-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 bg-black/90 backdrop-blur-sm modal-overlay">
+    <div class="bg-white rounded-xl w-full max-w-lg shadow-2xl text-gray-800 flex flex-col h-[600px] max-h-[90vh]">
+        <div class="p-5 border-b border-gray-200 flex justify-between items-center">
+            <h3 class="font-bold text-xl">App Tutorial</h3>
+            <button onclick="TutorialManager.close()" class="text-gray-400 hover:text-gray-800 text-2xl">&times;</button>
+        </div>
+        <div id="tutorial-content" class="flex-grow p-8 flex flex-col items-center justify-center text-center overflow-y-auto">
+            <!-- Dynamic Content Injected Here -->
+        </div>
+        <div class="p-5 border-t border-gray-200 bg-gray-50 flex justify-between items-center">
+            <div id="tutorial-dots" class="flex items-center"></div>
+            <button id="tutorial-next-btn" onclick="TutorialManager.next()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-6 py-2 rounded-lg transition">Next</button>
+        </div>
+    </div>
+</div>
+
 <script>
 // Fixed: Global array to prevent iOS Garbage Collection of utterances
 window.utterances = [];
+
+const SettingsManager = {
+    fontSize: 1.0,
+    theme: 'default',
+    init: function() {
+        const savedFont = localStorage.getItem('fa_fontSize');
+        const savedTheme = localStorage.getItem('fa_theme');
+        if (savedFont) this.setFontSize(parseFloat(savedFont));
+        if (savedTheme) this.setTheme(savedTheme);
+    },
+    open: function() { document.getElementById('settings-modal').classList.remove('hidden'); },
+    close: function() { document.getElementById('settings-modal').classList.add('hidden'); },
+    setFontSize: function(scale) {
+        this.fontSize = scale;
+        document.documentElement.style.setProperty('--font-scale', scale);
+        localStorage.setItem('fa_fontSize', scale);
+    },
+    setTheme: function(themeName) {
+        this.theme = themeName;
+        document.body.classList.remove('theme-high-contrast', 'theme-light');
+        if (themeName === 'high-contrast') document.body.classList.add('theme-high-contrast');
+        if (themeName === 'light') document.body.classList.add('theme-light');
+        localStorage.setItem('fa_theme', themeName);
+        this.close();
+    }
+};
+
+const TutorialManager = {
+    step: 0,
+    steps: [
+        {
+            title: "Welcome to 999 Operator",
+            text: "This simulator helps you practice communicating with Emergency Services. You will act as the caller on scene.",
+            icon: `<svg class="w-20 h-20 text-blue-500 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>`
+        },
+        {
+            title: "Talking to the Operator",
+            text: "<strong>Voice:</strong> Use Chrome/Edge. Tap 'Push to Speak', say your answer clearly, then tap again to stop.<br><br><strong>Touch:</strong> If voice fails, tap the blue options that appear on screen.",
+            icon: `<svg class="w-20 h-20 text-green-500 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"/></svg>`
+        },
+        {
+            title: "Button: Override",
+            text: "Use the <strong>Override</strong> button to manually force the simulator to a specific medical scenario (e.g., jumping straight to 'Heart Attack'). Useful if the voice AI misunderstands you.",
+            icon: `<div class="bg-yellow-600 text-white px-4 py-2 rounded-full font-bold mb-4">Override</div>`
+        },
+        {
+            title: "Button: Red Card",
+            text: "Use the <strong class='text-red-600'>Red Card</strong> button to introduce sudden complications. <br>Example: The patient stops breathing or vomits. This tests your ability to react to changes.",
+            icon: `<div class="bg-red-600 text-white px-4 py-2 rounded-full font-bold mb-4 border border-red-400 animate-pulse">⚠️ Red Card</div>`
+        },
+        {
+            title: "Review & Export",
+            text: "At any time, tap <strong>Transcript</strong> to review what was said. You can download the call log as a PDF for your training records.",
+            icon: `<svg class="w-20 h-20 text-gray-500 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>`
+        }
+    ],
+    start: function() {
+        this.step = 0;
+        document.getElementById('tutorial-modal').classList.remove('hidden');
+        this.render();
+    },
+    close: function() {
+        document.getElementById('tutorial-modal').classList.add('hidden');
+    },
+    next: function() {
+        this.step++;
+        if (this.step >= this.steps.length) {
+            this.close();
+        } else {
+            this.render();
+        }
+    },
+    render: function() {
+        const content = document.getElementById('tutorial-content');
+        const dots = document.getElementById('tutorial-dots');
+        const nextBtn = document.getElementById('tutorial-next-btn');
+        const s = this.steps[this.step];
+
+        // Content
+        content.innerHTML = `
+            ${s.icon}
+            <h2 class="text-2xl font-bold mb-4">${s.title}</h2>
+            <p class="text-lg text-gray-600 leading-relaxed font-scalable">${s.text}</p>
+        `;
+
+        // Dots
+        dots.innerHTML = '';
+        this.steps.forEach((_, i) => {
+            const dot = document.createElement('span');
+            dot.className = `tutorial-dot ${i === this.step ? 'active' : ''}`;
+            dots.appendChild(dot);
+        });
+
+        // Button
+        nextBtn.textContent = this.step === this.steps.length - 1 ? "Finish" : "Next";
+        nextBtn.className = this.step === this.steps.length - 1 
+            ? "bg-green-600 hover:bg-green-700 text-white font-bold px-6 py-2 rounded-lg transition"
+            : "bg-blue-600 hover:bg-blue-700 text-white font-bold px-6 py-2 rounded-lg transition";
+    }
+};
 
 const AppManager = {
 currentApp: null, masterScreen: null, scenarioWrapper: null, operatorWrapper: null, recognition: null, isListening: false, synth: window.speechSynthesis,
@@ -285,6 +492,7 @@ init: function() {
 this.masterScreen = document.getElementById('master-selection-screen');
 this.scenarioWrapper = document.getElementById('scenario-app-wrapper');
 this.operatorWrapper = document.getElementById('operator-app-wrapper');
+SettingsManager.init(); // Initialize Settings
 ScenarioApp.initDOM(); OperatorApp.initDOM(); this.setupSpeechRecognition();
 if ('serviceWorker' in navigator && !window.location.href.startsWith('blob:')) { navigator.serviceWorker.register('/First-Aid-Training-Suite/sw.js', { scope: '/First-Aid-Training-Suite/' }).catch(() => {}); }
 },
@@ -658,9 +866,15 @@ addMessage: function(text, sender, eta) {
 clearTimeout(this.operatorTypingTimeout); this.removeTypingIndicator(); 
 this.history.push({ sender, text, timestamp: new Date() });
 const messageDiv = document.createElement('div'); const wrapper = document.createElement('div'); 
-if (sender.startsWith('system')) { messageDiv.className = 'w-full max-w-xs text-center p-2 rounded-lg bg-gray-100 text-gray-600 border border-gray-200 font-semibold text-sm'; messageDiv.textContent = text + (eta ? ` (ETA: ${eta})` : ''); wrapper.className = 'w-full flex justify-center'; } 
+if (sender.startsWith('system')) { messageDiv.className = 'w-full max-w-xs text-center p-2 rounded-lg bg-gray-100 text-gray-600 border border-gray-200 font-semibold text-sm font-scalable-sm'; messageDiv.textContent = text + (eta ? ` (ETA: ${eta})` : ''); wrapper.className = 'w-full flex justify-center'; } 
 else { 
-messageDiv.className = `p-3 rounded-2xl max-w-xs shadow-sm text-sm ${sender === 'operator' ? 'bg-gray-700 text-white' : 'bg-blue-600 text-white text-right'}`; 
+messageDiv.className = `p-3 rounded-2xl max-w-xs shadow-sm text-sm font-scalable ${sender === 'operator' ? 'bg-gray-700 text-white' : 'bg-blue-600 text-white text-right'}`; 
+if (document.body.classList.contains('theme-high-contrast')) {
+    messageDiv.className = `p-3 rounded-2xl max-w-xs shadow-sm text-sm font-scalable border border-white font-bold ${sender === 'operator' ? 'bg-black text-yellow-300' : 'bg-black text-green-400 text-right'}`; 
+} else if (document.body.classList.contains('theme-light')) {
+    messageDiv.className = `p-3 rounded-2xl max-w-xs shadow-sm text-sm font-scalable ${sender === 'operator' ? 'bg-gray-200 text-gray-900' : 'bg-blue-500 text-white text-right'}`; 
+}
+
 messageDiv.textContent = text.charAt(0).toUpperCase() + text.slice(1); 
 wrapper.className = `w-full flex ${sender === 'operator' ? 'justify-start' : 'justify-end'}`; 
 } 
@@ -689,7 +903,7 @@ if(nodeId.includes("scene_safe") && this.currentETA) text = text.replace("organi
 this.addMessage(text, 'operator'); 
 }
 this.userOptions.innerHTML = ''; 
-if (node.options && node.options.length > 0) { node.options.forEach(option => { const button = document.createElement('button'); button.textContent = option.text; button.className = "w-full text-left p-3 bg-blue-600 text-white rounded-xl font-semibold transition hover:bg-blue-500 active:scale-95 mb-2 text-sm"; button.onclick = () => this.selectOption(option); this.userOptions.appendChild(button); }); } 
+if (node.options && node.options.length > 0) { node.options.forEach(option => { const button = document.createElement('button'); button.textContent = option.text; button.className = "w-full text-left p-3 bg-blue-600 text-white rounded-xl font-semibold transition hover:bg-blue-500 active:scale-95 mb-2 text-sm font-scalable"; button.onclick = () => this.selectOption(option); this.userOptions.appendChild(button); }); } 
 }, delay); 
 },
 selectOption: function(option) { 
@@ -715,7 +929,7 @@ content.innerHTML = '';
 this.history.forEach(item => {
 const row = document.createElement('div');
 row.className = 'transcript-row flex';
-row.innerHTML = `<div class="t-sender t-${item.sender}">${item.sender.toUpperCase()}</div><div class="flex-grow">${item.text}</div>`;
+row.innerHTML = `<div class="t-sender t-${item.sender}">${item.sender.toUpperCase()}</div><div class="flex-grow font-scalable-sm">${item.text}</div>`;
 content.appendChild(row);
 });
 modal.classList.remove('hidden');
