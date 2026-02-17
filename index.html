@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>999 Simulator v10.1.1</title>
+<title>999 Simulator v10.2.0</title>
 
 <script src="https://cdn.tailwindcss.com"></script>
 
@@ -185,18 +185,18 @@ const CallSim = {
             listen: true, 
             keywords: { 
                 'no': 'cpr_protocol', 'not breathing': 'cpr_protocol', 'gasping': 'cpr_protocol_agonal',
-                'yes': 'amb_q2_awake', 'yeah': 'amb_q2_awake', 'breathing': 'amb_q2_awake' // Added YES
+                'yes': 'amb_q2_awake', 'yeah': 'amb_q2_awake', 'breathing': 'amb_q2_awake' 
             }, 
             next: 'amb_q2_awake' 
         },
 
-        // Q2: Awake - AVPU Logic Branch
+        // Q2: Awake
         'amb_q2_awake': { text: "Are they awake?", voice: 'ambulance', next: 'wait_awake' },
         'wait_awake': { 
             listen: true, 
             keywords: { 
                 'no': 'mark_unresponsive', 'unconscious': 'mark_unresponsive', 'not responding': 'mark_unresponsive',
-                'yes': 'amb_avpu_alert', 'yeah': 'amb_avpu_alert' // Added YES
+                'yes': 'amb_avpu_alert', 'yeah': 'amb_avpu_alert' 
             },
             next: 'amb_avpu_alert' 
         },
@@ -207,7 +207,7 @@ const CallSim = {
         'wait_avpu_a': {
             listen: true,
             keywords: { 
-                'yes': 'amb_q3_address', 'yeah': 'amb_q3_address', 'yep': 'amb_q3_address', // Added YES
+                'yes': 'amb_q3_address', 'yeah': 'amb_q3_address', 'yep': 'amb_q3_address', 
                 'no': 'amb_avpu_voice', 'confused': 'amb_avpu_voice', 'not really': 'amb_avpu_voice', 'don\'t know': 'amb_avpu_voice' 
             },
             next: 'amb_q3_address' 
@@ -219,7 +219,7 @@ const CallSim = {
             listen: true,
             keywords: { 
                 'no': 'mark_unresponsive',
-                'yes': 'amb_q3_address', 'yeah': 'amb_q3_address' // Added YES
+                'yes': 'amb_q3_address', 'yeah': 'amb_q3_address' 
             }, 
             next: 'amb_q3_address' 
         },
@@ -259,7 +259,7 @@ const CallSim = {
             listen: true,
             keywords: { 
                 'yes': 'allergy_severe', 'breathing': 'allergy_severe', 'swollen': 'allergy_severe',
-                'no': 'allergy_mild', 'nope': 'allergy_mild' // Added NO
+                'no': 'allergy_mild', 'nope': 'allergy_mild' 
             },
             next: 'allergy_mild'
         },
@@ -272,7 +272,7 @@ const CallSim = {
             listen: true, 
             keywords: { 
                 'yes': 'diabetic_check_2', 'yeah': 'diabetic_check_2',
-                'no': 'amb_s_sample', 'nope': 'amb_s_sample' // Added NO
+                'no': 'amb_s_sample', 'nope': 'amb_s_sample' 
             },
             next: 'diabetic_check_2' 
         },
@@ -285,7 +285,7 @@ const CallSim = {
         'amb_a_sample': { text: "Do they have any known allergies?", voice: 'ambulance', next: 'wait_a' },
         'wait_a': { 
             listen: true, 
-            keywords: { 'no': 'amb_prompt_tags_a', 'none': 'amb_prompt_tags_a', 'don\'t know': 'amb_prompt_tags_a', 'yes': 'amb_m_sample' }, // Added Yes/No logic
+            keywords: { 'no': 'amb_prompt_tags_a', 'none': 'amb_prompt_tags_a', 'don\'t know': 'amb_prompt_tags_a', 'yes': 'amb_m_sample' }, 
             next: 'amb_m_sample' 
         },
         'amb_prompt_tags_a': { text: "Okay, check their wrists or neck for any medical alert bracelets or tags.", voice: 'ambulance', next: 'amb_m_sample' },
@@ -293,7 +293,7 @@ const CallSim = {
         'amb_m_sample': { text: "Are they taking any medication?", voice: 'ambulance', next: 'wait_m' },
         'wait_m': { 
             listen: true, 
-            keywords: { 'no': 'amb_prompt_phone', 'none': 'amb_prompt_phone', 'don\'t know': 'amb_prompt_phone', 'yes': 'amb_p_sample' }, // Added Yes/No
+            keywords: { 'no': 'amb_prompt_phone', 'none': 'amb_prompt_phone', 'don\'t know': 'amb_prompt_phone', 'yes': 'amb_p_sample' }, 
             next: 'amb_p_sample' 
         },
         'amb_prompt_phone': { text: "Please check the emergency contacts or Medical ID on their phone if you can.", voice: 'ambulance', next: 'amb_p_sample' },
@@ -575,6 +575,7 @@ const CallSim = {
         const loc = this.capturedLocation || "";
         const cond = this.capturedCondition || "";
         const remoteKeywords = ['hill', 'river', 'mountain', 'forest', 'lake', 'wood', 'park'];
+        // Critical List
         const criticalKeywords = ['spinal', 'spine', 'back', 'neck', 'breathing', 'heart', 'stroke', 'arrest', 'cpr', 'unresponsive', 'unconscious', 'bleed', 'burn', 'choke', 'seizure', 'allergy', 'anaphylaxis'];
         
         let isRemote = remoteKeywords.some(k => loc.includes(k));
@@ -597,9 +598,13 @@ const CallSim = {
         }
 
         if (!this.calculatedETA || forceRecalculate) {
-            this.calculatedETA = Math.floor(Math.random() * (maxTime - minTime + 1)) + minTime;
+            let rawTime = Math.floor(Math.random() * (maxTime - minTime + 1)) + minTime;
+            // Round to nearest 5 (min 5 mins)
+            this.calculatedETA = Math.max(5, Math.round(rawTime / 5) * 5);
         } else if (isCritical && this.calculatedETA > 30) {
-            this.calculatedETA = Math.floor(Math.random() * (maxTime - minTime + 1)) + minTime;
+            // Auto upgrade logic
+            let rawTime = Math.floor(Math.random() * (maxTime - minTime + 1)) + minTime;
+            this.calculatedETA = Math.max(5, Math.round(rawTime / 5) * 5);
         }
 
         return this.calculatedETA;
