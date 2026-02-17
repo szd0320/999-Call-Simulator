@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>999 Simulator v10.1.0</title>
+<title>999 Simulator v10.1.1</title>
 
 <script src="https://cdn.tailwindcss.com"></script>
 
@@ -137,7 +137,6 @@ const Dialer = {
     call: function() {
         const emergencyNumbers = ['999', '112', '911', '000', '111', '110', '119', '100', '101'];
         if (emergencyNumbers.includes(this.currentNumber)) {
-            // Activate Audio Context on user gesture (essential for mobile)
             CallSim.initAudio();
             document.getElementById('screen-dialer').classList.add('hidden');
             document.getElementById('screen-active').classList.remove('hidden');
@@ -184,15 +183,21 @@ const CallSim = {
         'amb_q1_breath': { text: "Hello, ambulance service. Is the patient breathing?", voice: 'ambulance', next: 'wait_breath' },
         'wait_breath': { 
             listen: true, 
-            keywords: { 'no': 'cpr_protocol', 'not breathing': 'cpr_protocol', 'gasping': 'cpr_protocol_agonal' }, 
+            keywords: { 
+                'no': 'cpr_protocol', 'not breathing': 'cpr_protocol', 'gasping': 'cpr_protocol_agonal',
+                'yes': 'amb_q2_awake', 'yeah': 'amb_q2_awake', 'breathing': 'amb_q2_awake' // Added YES
+            }, 
             next: 'amb_q2_awake' 
         },
 
-        // Q2: Awake
+        // Q2: Awake - AVPU Logic Branch
         'amb_q2_awake': { text: "Are they awake?", voice: 'ambulance', next: 'wait_awake' },
         'wait_awake': { 
             listen: true, 
-            keywords: { 'no': 'mark_unresponsive', 'unconscious': 'mark_unresponsive', 'not responding': 'mark_unresponsive' },
+            keywords: { 
+                'no': 'mark_unresponsive', 'unconscious': 'mark_unresponsive', 'not responding': 'mark_unresponsive',
+                'yes': 'amb_avpu_alert', 'yeah': 'amb_avpu_alert' // Added YES
+            },
             next: 'amb_avpu_alert' 
         },
         'mark_unresponsive': { next: 'amb_q3_address', action: 'set_unresponsive' }, 
@@ -201,8 +206,10 @@ const CallSim = {
         'amb_avpu_alert': { text: "Are they alert? Can they answer your questions?", voice: 'ambulance', next: 'wait_avpu_a' },
         'wait_avpu_a': {
             listen: true,
-            // Added explicit YES to fix dead end
-            keywords: { 'yes': 'amb_q3_address', 'no': 'amb_avpu_voice', 'confused': 'amb_avpu_voice', 'not really': 'amb_avpu_voice', 'don\'t know': 'amb_avpu_voice' },
+            keywords: { 
+                'yes': 'amb_q3_address', 'yeah': 'amb_q3_address', 'yep': 'amb_q3_address', // Added YES
+                'no': 'amb_avpu_voice', 'confused': 'amb_avpu_voice', 'not really': 'amb_avpu_voice', 'don\'t know': 'amb_avpu_voice' 
+            },
             next: 'amb_q3_address' 
         },
 
@@ -210,7 +217,10 @@ const CallSim = {
         'amb_avpu_voice': { text: "Do they react when you talk, even if they cannot talk back?", voice: 'ambulance', next: 'wait_avpu_v' },
         'wait_avpu_v': {
             listen: true,
-            keywords: { 'no': 'mark_unresponsive' }, 
+            keywords: { 
+                'no': 'mark_unresponsive',
+                'yes': 'amb_q3_address', 'yeah': 'amb_q3_address' // Added YES
+            }, 
             next: 'amb_q3_address' 
         },
 
@@ -247,7 +257,10 @@ const CallSim = {
         'allergy_check': { text: "Help has been arranged. Are they having difficulty breathing, or is there swelling around the mouth or throat?", voice: 'ambulance', next: 'wait_allergy_symptoms' },
         'wait_allergy_symptoms': {
             listen: true,
-            keywords: { 'yes': 'allergy_severe', 'breathing': 'allergy_severe', 'swollen': 'allergy_severe' },
+            keywords: { 
+                'yes': 'allergy_severe', 'breathing': 'allergy_severe', 'swollen': 'allergy_severe',
+                'no': 'allergy_mild', 'nope': 'allergy_mild' // Added NO
+            },
             next: 'allergy_mild'
         },
         'allergy_severe': { text: "This sounds like anaphylaxis. If they have an adrenaline auto-injector or EpiPen, help them use it immediately. Keep them comfortable. I have upgraded the ambulance to top priority.", voice: 'ambulance', action: 'upgrade_to_critical', next: 'amb_s_sample' },
@@ -255,7 +268,14 @@ const CallSim = {
 
         /* --- DIABETES PROTOCOL --- */
         'diabetic_check_1': { text: "Help has been arranged and will be there in {ETA} minutes. Are they confused, clammy or aggressive?", voice: 'ambulance', next: 'wait_diabetic_1' },
-        'wait_diabetic_1': { listen: true, next: 'diabetic_check_2' },
+        'wait_diabetic_1': { 
+            listen: true, 
+            keywords: { 
+                'yes': 'diabetic_check_2', 'yeah': 'diabetic_check_2',
+                'no': 'amb_s_sample', 'nope': 'amb_s_sample' // Added NO
+            },
+            next: 'diabetic_check_2' 
+        },
         'diabetic_check_2': { text: "If they are alert and can swallow, give them a sugary drink, glucose gel, or sweets. Do not give them diet drinks.", voice: 'ambulance', next: 'amb_s_sample' },
 
         /* --- S.A.M.P.L.E (With ETA Insertions) --- */
@@ -263,15 +283,27 @@ const CallSim = {
         'wait_s': { listen: true, next: 'amb_a_sample' },
         
         'amb_a_sample': { text: "Do they have any known allergies?", voice: 'ambulance', next: 'wait_a' },
-        'wait_a': { listen: true, keywords: { 'no': 'amb_prompt_tags_a', 'none': 'amb_prompt_tags_a', 'don\'t know': 'amb_prompt_tags_a' }, next: 'amb_m_sample' },
+        'wait_a': { 
+            listen: true, 
+            keywords: { 'no': 'amb_prompt_tags_a', 'none': 'amb_prompt_tags_a', 'don\'t know': 'amb_prompt_tags_a', 'yes': 'amb_m_sample' }, // Added Yes/No logic
+            next: 'amb_m_sample' 
+        },
         'amb_prompt_tags_a': { text: "Okay, check their wrists or neck for any medical alert bracelets or tags.", voice: 'ambulance', next: 'amb_m_sample' },
 
         'amb_m_sample': { text: "Are they taking any medication?", voice: 'ambulance', next: 'wait_m' },
-        'wait_m': { listen: true, keywords: { 'no': 'amb_prompt_phone', 'none': 'amb_prompt_phone', 'don\'t know': 'amb_prompt_phone' }, next: 'amb_p_sample' },
+        'wait_m': { 
+            listen: true, 
+            keywords: { 'no': 'amb_prompt_phone', 'none': 'amb_prompt_phone', 'don\'t know': 'amb_prompt_phone', 'yes': 'amb_p_sample' }, // Added Yes/No
+            next: 'amb_p_sample' 
+        },
         'amb_prompt_phone': { text: "Please check the emergency contacts or Medical ID on their phone if you can.", voice: 'ambulance', next: 'amb_p_sample' },
 
         'amb_p_sample': { text: "Do they have any past medical history?", voice: 'ambulance', next: 'wait_p' },
-        'wait_p': { listen: true, keywords: { 'no': 'amb_prompt_tags_p', 'none': 'amb_prompt_tags_p', 'don\'t know': 'amb_prompt_tags_p' }, next: 'amb_l_sample' },
+        'wait_p': { 
+            listen: true, 
+            keywords: { 'no': 'amb_prompt_tags_p', 'none': 'amb_prompt_tags_p', 'don\'t know': 'amb_prompt_tags_p', 'yes': 'amb_l_sample' }, 
+            next: 'amb_l_sample' 
+        },
         'amb_prompt_tags_p': { text: "Check again for any medical tags or cards in their wallet.", voice: 'ambulance', next: 'amb_l_sample' },
 
         'amb_l_sample': { text: "When did they last have something to eat or drink?", voice: 'ambulance', next: 'wait_l' },
@@ -329,7 +361,11 @@ const CallSim = {
         'assess_cold': { text: "Help has been arranged and we are expecting them to arrive in {ETA} minutes. You must find shelter or a bivi bag. Insulate them from the ground. Replace wet clothing with dry if possible. If they are alert, give warm sweet drinks.", voice: 'ambulance', next: 'amb_s_sample' },
 
         'assess_bleed': { text: "Help has been arranged and we are expecting them to arrive in {ETA} minutes. Is the blood spurting or pumping out?", voice: 'ambulance', next: 'wait_bleed_type' },
-        'wait_bleed_type': { listen: true, keywords: { 'yes': 'bleed_catastrophic', 'spurting': 'bleed_catastrophic' }, next: 'bleed_standard' },
+        'wait_bleed_type': { 
+            listen: true, 
+            keywords: { 'yes': 'bleed_catastrophic', 'spurting': 'bleed_catastrophic', 'no': 'bleed_standard', 'nope': 'bleed_standard' }, 
+            next: 'bleed_standard' 
+        },
         'bleed_catastrophic': { text: "This is a life-threatening bleed. Apply direct pressure immediately. If you have a haemostatic dressing or tourniquet, use it now. Do not release pressure.", voice: 'ambulance', next: 'amb_s_sample' },
         'bleed_standard': { text: "Apply firm direct pressure with a clean cloth. Elevate the limb if possible. Bandage it firmly.", voice: 'ambulance', next: 'amb_s_sample' },
         
