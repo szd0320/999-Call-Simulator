@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+/<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -752,5 +752,18 @@ const CallSim = {
 
 document.addEventListener('DOMContentLoaded', () => CallSim.init());
 </script>
+    
+    <script>
+      if (typeof navigator.serviceWorker !== 'undefined') {
+        // It is a good practice to wait for the page to fully load first
+        window.addEventListener('load', function() {
+            navigator.serviceWorker.register('sw.js');
+        });
+      }
+    </script>
+
 </body>
+</html>
+</body>
+
 </html>
