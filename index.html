@@ -3,7 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>999 Simulator v10.2.0</title>
+<title>999 Simulator v10.1.3</title>
+
+<link rel="manifest" href="manifest.json">
 
 <script src="https://cdn.tailwindcss.com"></script>
 
@@ -32,6 +34,10 @@
     .bubble-user { background: var(--accent); color: white; border-bottom-right-radius: 4px; align-self: flex-end; text-align: right; }
     .bubble-sys { align-self: center; font-size: 0.75rem; color: #94a3b8; background: rgba(255,255,255,0.05); padding: 4px 12px; border-radius: 100px; margin: 16px 0; border: 1px solid rgba(255,255,255,0.05); }
 
+    /* Tutorial Dots */
+    .tut-dot { width: 8px; height: 8px; border-radius: 50%; background: #475569; transition: all 0.3s ease; }
+    .tut-dot.active { background: #3b82f6; transform: scale(1.3); }
+
     /* Animations */
     @keyframes slideIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     .wave-bar { width: 3px; background: #22c55e; animation: wave 1s ease-in-out infinite; border-radius: 10px; }
@@ -44,21 +50,27 @@
 </head>
 <body class="flex flex-col">
 
-<div class="h-14 bg-slate-900/90 backdrop-blur border-b border-white/5 flex items-center justify-between px-4 z-20 shrink-0">
+<div class="h-14 bg-slate-900/90 backdrop-blur border-b border-white/5 flex items-center justify-between px-4 z-20 shrink-0 absolute top-0 left-0 right-0">
     <div class="flex items-center gap-3">
         <div class="w-2 h-2 rounded-full bg-red-500 animate-pulse hidden" id="rec-dot"></div>
         <span class="font-mono text-xs text-slate-400" id="header-status">DISCONNECTED</span>
     </div>
-    <button onclick="CallSim.reset()" class="text-xs bg-white/5 hover:bg-white/10 px-3 py-1.5 rounded text-slate-300 transition">Reset</button>
+    <div class="flex gap-2">
+        <button onclick="Tutorial.showManual()" class="w-8 h-8 flex items-center justify-center bg-white/5 hover:bg-white/10 rounded-full text-slate-300 transition" aria-label="Help">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" /></svg>
+        </button>
+        <button onclick="CallSim.reset()" class="text-xs bg-white/5 hover:bg-white/10 px-3 py-1.5 rounded text-slate-300 transition">Reset</button>
+    </div>
 </div>
 
-<div class="relative flex-grow overflow-hidden bg-slate-950">
+<div class="relative flex-grow overflow-hidden bg-slate-950 mt-14">
     
-    <div id="screen-dialer" class="absolute inset-0 z-10 flex flex-col items-center justify-end pb-12 bg-slate-950">
-        <div class="w-full px-8 mb-8 text-center">
+    <div id="screen-dialer" class="absolute inset-0 z-10 flex flex-col items-center justify-center pb-8 bg-slate-950 overflow-y-auto">
+        <div class="w-full px-8 mb-6 text-center mt-4">
             <div id="dial-display" class="text-5xl font-light text-white h-16 tracking-wider"></div>
-            <div id="dial-feedback" class="text-sm text-red-400 h-6 mt-2 opacity-0 transition-opacity">Number Not Recognised</div>
+            <div id="dial-feedback" class="text-sm text-red-400 h-6 mt-1 opacity-0 transition-opacity">Number Not Recognised</div>
         </div>
+        
         <div class="grid grid-cols-3 gap-x-6 gap-y-4 mb-8">
             <button class="dial-btn" onclick="Dialer.press('1')"><span class="dial-number">1</span><span class="dial-alpha">&nbsp;</span></button>
             <button class="dial-btn" onclick="Dialer.press('2')"><span class="dial-number">2</span><span class="dial-alpha">ABC</span></button>
@@ -73,23 +85,30 @@
             <button class="dial-btn" onclick="Dialer.press('0')"><span class="dial-number">0</span><span class="dial-alpha">+</span></button>
             <button class="dial-btn" onclick="Dialer.press('#')"><span class="dial-number">#</span></button>
         </div>
-        <div class="flex items-center gap-8">
-            <button onclick="Dialer.clear()" class="w-16 h-16 flex items-center justify-center text-slate-400 hover:text-white transition">
-                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 14l9-5-9-5-9 5 9 5z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 14l9-5-9-5-9 5 9 5z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/></svg>
-                <span class="sr-only">Delete</span>
+
+        <div class="flex items-center gap-8 mb-4">
+            <button onclick="Dialer.clear()" class="w-16 h-16 flex items-center justify-center text-slate-500 hover:text-white transition">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-8 h-8">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+                <span class="sr-only">Clear All</span>
             </button>
+            
             <button onclick="Dialer.call()" class="dial-btn dial-call shadow-[0_0_30px_rgba(34,197,94,0.4)]">
                 <svg class="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M20.01 15.38c-1.23 0-2.42-.2-3.53-.56a.977.977 0 00-1.01.24l-1.57 1.97c-2.83-1.44-5.15-3.75-6.59-6.59l1.97-1.57c.23-.23.33-.55.24-1.01a17.27 17.27 0 00-.56-3.53A.995.995 0 008 4H4a1 1 0 00-1 1c0 9.39 7.61 17 17 17a1 1 0 001-1v-4a1 1 0 00-1.01-1.02z"/></svg>
             </button>
-            <button onclick="Dialer.backspace()" class="w-16 h-16 flex items-center justify-center text-slate-400 hover:text-white transition">
-                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 12H5m7 7l-7-7 7-7"/></svg>
-                <span class="sr-only">Clear</span>
+            
+            <button onclick="Dialer.backspace()" class="w-16 h-16 flex items-center justify-center text-slate-500 hover:text-white transition">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-8 h-8">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 9.75L14.25 12m0 0l2.25 2.25M14.25 12l2.25-2.25M14.25 12L12 14.25m-2.58 4.92l-6.375-6.375a1.125 1.125 0 010-1.59L9.42 4.83c.211-.211.498-.33.796-.33H19.5a2.25 2.25 0 012.25 2.25v10.5a2.25 2.25 0 01-2.25 2.25h-9.284c-.298 0-.585-.119-.796-.33z" />
+                </svg>
+                <span class="sr-only">Backspace</span>
             </button>
         </div>
     </div>
 
     <div id="screen-active" class="absolute inset-0 z-0 flex flex-col hidden bg-slate-950">
-        <div class="h-12 bg-slate-900 border-b border-white/5 flex items-center justify-center">
+        <div class="h-12 bg-slate-900 border-b border-white/5 flex items-center justify-center shrink-0">
             <div class="flex flex-col items-center">
                 <span id="call-timer" class="font-mono text-blue-400 text-xs tracking-widest">00:00</span>
                 <span id="call-service" class="text-[10px] text-slate-500 uppercase tracking-wide">Emergency Operator</span>
@@ -99,7 +118,7 @@
         <div id="chat-log" class="flex-grow flex flex-col overflow-y-auto p-4 no-scrollbar relative">
             </div>
 
-        <div class="p-4 bg-slate-900 border-t border-white/10 safe-bottom">
+        <div class="p-4 bg-slate-900 border-t border-white/10 shrink-0 pb-safe">
             <div id="voice-vis" class="h-8 flex justify-center items-center gap-1 mb-4 opacity-0 transition-opacity">
                 <div class="wave-bar" style="animation-delay: 0s"></div>
                 <div class="wave-bar" style="animation-delay: 0.1s"></div>
@@ -122,7 +141,88 @@
     </div>
 </div>
 
+<div id="tutorial-modal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="bg-slate-800 rounded-3xl max-w-sm w-full p-6 text-center border border-slate-700 shadow-2xl relative">
+        <button onclick="Tutorial.finish()" class="absolute top-4 right-4 text-slate-400 hover:text-white transition">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+        </button>
+        
+        <div id="tut-icon" class="w-20 h-20 bg-blue-500/20 text-blue-400 rounded-full flex items-center justify-center mx-auto mb-5 text-4xl shadow-inner border border-blue-500/30"></div>
+        <h2 id="tut-title" class="text-2xl font-bold text-white mb-3 tracking-tight"></h2>
+        <p id="tut-text" class="text-slate-300 text-sm mb-8 leading-relaxed h-20"></p>
+        
+        <div class="flex items-center justify-between mt-4">
+            <div id="tut-dots" class="flex gap-2"></div>
+            <button id="tut-next" onclick="Tutorial.next()" class="px-6 py-2.5 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-xl transition shadow-lg shadow-blue-900/50">Next</button>
+        </div>
+    </div>
+</div>
+
 <script>
+/* =========================================
+   TUTORIAL LOGIC
+   ========================================= */
+const Tutorial = {
+    step: 0,
+    data: [
+        { icon: '🚨', title: '999 Call Simulator', text: 'Welcome! This tool helps you practice communicating with emergency dispatchers during high-pressure situations.' },
+        { icon: '📞', title: 'Dial to Begin', text: 'Use the keypad to dial an emergency number to start. The system accepts universal numbers like 999, 112, 911, 000, 111, and 101.' },
+        { icon: '🎙️', title: 'Speak or Type', text: 'When connected, listen to the operator. Tap the microphone button to speak your answers clearly, or use the text box to type.' },
+        { icon: '🧠', title: 'Smart Scenarios', text: 'The AI adapts to you. Mentioning keywords like "not breathing", "bleeding", or "diabetes" will trigger real-world medical protocols.' }
+    ],
+    init: function() {
+        if(!localStorage.getItem('tut_complete_v18')) {
+            document.getElementById('tutorial-modal').classList.remove('hidden');
+            this.render();
+        }
+    },
+    render: function() {
+        const d = this.data[this.step];
+        document.getElementById('tut-icon').textContent = d.icon;
+        document.getElementById('tut-title').textContent = d.title;
+        document.getElementById('tut-text').textContent = d.text;
+        
+        const dots = document.getElementById('tut-dots');
+        dots.innerHTML = '';
+        this.data.forEach((_, i) => {
+            dots.innerHTML += `<div class="tut-dot ${i === this.step ? 'active' : ''}"></div>`;
+        });
+        
+        const btn = document.getElementById('tut-next');
+        if (this.step === this.data.length - 1) {
+            btn.textContent = "Start Practice";
+            btn.classList.replace('bg-blue-600', 'bg-green-600');
+            btn.classList.replace('hover:bg-blue-500', 'hover:bg-green-500');
+            btn.classList.replace('shadow-blue-900/50', 'shadow-green-900/50');
+        } else {
+            btn.textContent = "Next";
+            btn.classList.replace('bg-green-600', 'bg-blue-600');
+            btn.classList.replace('hover:bg-green-500', 'hover:bg-blue-500');
+            btn.classList.replace('shadow-green-900/50', 'shadow-blue-900/50');
+        }
+    },
+    next: function() {
+        if (this.step < this.data.length - 1) {
+            this.step++;
+            this.render();
+        } else {
+            this.finish();
+        }
+    },
+    finish: function() {
+        localStorage.setItem('tut_complete_v18', 'true');
+        document.getElementById('tutorial-modal').classList.add('hidden');
+    },
+    showManual: function() {
+        this.step = 0;
+        document.getElementById('tutorial-modal').classList.remove('hidden');
+        this.render();
+    }
+};
+
+/* =========================================
+   DIALER LOGIC
+   ========================================= */
 const Dialer = {
     currentNumber: '',
     press: function(num) {
@@ -149,6 +249,9 @@ const Dialer = {
     }
 };
 
+/* =========================================
+   CALL LOGIC
+   ========================================= */
 const CallSim = {
     synth: window.speechSynthesis,
     recognition: null,
@@ -185,18 +288,18 @@ const CallSim = {
             listen: true, 
             keywords: { 
                 'no': 'cpr_protocol', 'not breathing': 'cpr_protocol', 'gasping': 'cpr_protocol_agonal',
-                'yes': 'amb_q2_awake', 'yeah': 'amb_q2_awake', 'breathing': 'amb_q2_awake' 
+                'yes': 'amb_q2_awake', 'yeah': 'amb_q2_awake', 'yep': 'amb_q2_awake', 'breathing': 'amb_q2_awake' 
             }, 
             next: 'amb_q2_awake' 
         },
 
-        // Q2: Awake
+        // Q2: Awake - AVPU Logic Branch
         'amb_q2_awake': { text: "Are they awake?", voice: 'ambulance', next: 'wait_awake' },
         'wait_awake': { 
             listen: true, 
             keywords: { 
-                'no': 'mark_unresponsive', 'unconscious': 'mark_unresponsive', 'not responding': 'mark_unresponsive',
-                'yes': 'amb_avpu_alert', 'yeah': 'amb_avpu_alert' 
+                'no': 'mark_unresponsive', 'unconscious': 'mark_unresponsive', 'not responding': 'mark_unresponsive', 'nope': 'mark_unresponsive',
+                'yes': 'amb_avpu_alert', 'yeah': 'amb_avpu_alert', 'yep': 'amb_avpu_alert'
             },
             next: 'amb_avpu_alert' 
         },
@@ -208,7 +311,7 @@ const CallSim = {
             listen: true,
             keywords: { 
                 'yes': 'amb_q3_address', 'yeah': 'amb_q3_address', 'yep': 'amb_q3_address', 
-                'no': 'amb_avpu_voice', 'confused': 'amb_avpu_voice', 'not really': 'amb_avpu_voice', 'don\'t know': 'amb_avpu_voice' 
+                'no': 'amb_avpu_voice', 'confused': 'amb_avpu_voice', 'not really': 'amb_avpu_voice', 'don\'t know': 'amb_avpu_voice', 'nope': 'amb_avpu_voice'
             },
             next: 'amb_q3_address' 
         },
@@ -218,8 +321,8 @@ const CallSim = {
         'wait_avpu_v': {
             listen: true,
             keywords: { 
-                'no': 'mark_unresponsive',
-                'yes': 'amb_q3_address', 'yeah': 'amb_q3_address' 
+                'no': 'mark_unresponsive', 'nope': 'mark_unresponsive',
+                'yes': 'amb_q3_address', 'yeah': 'amb_q3_address', 'yep': 'amb_q3_address'
             }, 
             next: 'amb_q3_address' 
         },
@@ -236,19 +339,26 @@ const CallSim = {
             listen: true, 
             capture: 'condition',
             keywords: { 
-                'diabetes': 'diabetic_check_1', 'diabetic': 'diabetic_check_1', 'insulin': 'diabetic_check_1', 'hypo': 'diabetic_check_1', 'sugar': 'diabetic_check_1',
+                // Diabetes
+                'diabetes': 'diabetic_check_1', 'diabetic': 'diabetic_check_1', 'insulin': 'diabetic_check_1', 'hypo': 'diabetic_check_1', 'sugar': 'diabetic_check_1', 'type 1': 'diabetic_check_1', 'type 2': 'diabetic_check_1', 'faint': 'diabetic_check_1', 'dizzy': 'diabetic_check_1',
                 // Weather / Temp
-                'sun': 'assess_heat', 'heat': 'assess_heat', 'hot': 'assess_heat', 'heatstroke': 'assess_heat', 'sweating': 'assess_heat',
-                'hypothermia': 'assess_cold', 'cold': 'assess_cold', 'river': 'assess_cold', 'lake': 'assess_cold', 'water': 'assess_cold', 'rain': 'assess_cold', 'snow': 'assess_cold', 'wind': 'assess_cold', 'freezing': 'assess_cold',
-                // Allergy / Anaphylaxis
-                'allergy': 'allergy_check', 'allergic': 'allergy_check', 'swelling': 'allergy_check', 'rash': 'allergy_check', 'itchy': 'allergy_check', 'puffy': 'allergy_check', 'sting': 'allergy_check', 'nuts': 'allergy_check', 'reaction': 'allergy_check', 'peanuts': 'allergy_check', 'bee': 'allergy_check',
+                'sun': 'assess_heat', 'heat': 'assess_heat', 'hot': 'assess_heat', 'heatstroke': 'assess_heat', 'sweating': 'assess_heat', 'exhaustion': 'assess_heat', 'dehydrated': 'assess_heat', 'sunburn': 'assess_heat', 'overheated': 'assess_heat',
+                'hypothermia': 'assess_cold', 'cold': 'assess_cold', 'river': 'assess_cold', 'lake': 'assess_cold', 'water': 'assess_cold', 'rain': 'assess_cold', 'snow': 'assess_cold', 'wind': 'assess_cold', 'freezing': 'assess_cold', 'ice': 'assess_cold', 'frostbite': 'assess_cold', 'wet': 'assess_cold', 'shivering': 'assess_cold', 'drowning': 'assess_cold', 'pool': 'assess_cold', 'fell in': 'assess_cold',
+                // Allergy
+                'allergy': 'allergy_check', 'allergic': 'allergy_check', 'swelling': 'allergy_check', 'rash': 'allergy_check', 'itchy': 'allergy_check', 'puffy': 'allergy_check', 'sting': 'allergy_check', 'nuts': 'allergy_check', 'reaction': 'allergy_check', 'peanuts': 'allergy_check', 'bee': 'allergy_check', 'wasp': 'allergy_check', 'insect': 'allergy_check', 'shellfish': 'allergy_check', 'seafood': 'allergy_check', 'anaphylaxis': 'allergy_check', 'epipen': 'allergy_check', 'throat closed': 'allergy_check',
                 // Trauma
-                'bleed': 'assess_bleed', 'cut': 'assess_bleed', 'glass': 'assess_bleed', 'knife': 'assess_bleed', 'blood': 'assess_bleed',
-                'burn': 'assess_burn', 'fire': 'assess_burn', 'smoke': 'assess_burn',
-                'choke': 'assess_choke', 'choking': 'assess_choke', 'food': 'assess_choke', 'swallowed': 'assess_choke', 
-                'seizure': 'assess_seizure', 'fitting': 'assess_seizure', 'shaking': 'assess_seizure',
-                'fall': 'assess_spinal', 'fell': 'assess_spinal', 'ladder': 'assess_spinal', 'roof': 'assess_spinal', 'tree': 'assess_spinal', 'stairs': 'assess_spinal', 'height': 'assess_spinal', 'back': 'assess_spinal', 'slip': 'assess_spinal', 'trip': 'assess_spinal',
-                'chest': 'assess_chest', 'heart': 'assess_chest', 'pain': 'assess_chest'
+                'bleed': 'assess_bleed', 'cut': 'assess_bleed', 'glass': 'assess_bleed', 'knife': 'assess_bleed', 'blood': 'assess_bleed', 'gash': 'assess_bleed', 'slice': 'assess_bleed', 'stabbed': 'assess_bleed', 'amputation': 'assess_bleed', 'spurting': 'assess_bleed', 'hemorrhage': 'assess_bleed', 'laceration': 'assess_bleed', 'wound': 'assess_bleed', 'slashed': 'assess_bleed', 'bleeding': 'assess_bleed',
+                // Burn
+                'burn': 'assess_burn', 'fire': 'assess_burn', 'smoke': 'assess_burn', 'scald': 'assess_burn', 'boiling': 'assess_burn', 'chemical': 'assess_burn', 'acid': 'assess_burn', 'electrocuted': 'assess_burn', 'flames': 'assess_burn', 'stove': 'assess_burn', 'oven': 'assess_burn',
+                // Choke
+                'choke': 'assess_choke', 'choking': 'assess_choke', 'food': 'assess_choke', 'swallowed': 'assess_choke', 'gagging': 'assess_choke', 'stuck': 'assess_choke', 'blockage': 'assess_choke', 'bone': 'assess_choke', 'coughing': 'assess_choke',
+                // Seizure
+                'seizure': 'assess_seizure', 'fitting': 'assess_seizure', 'shaking': 'assess_seizure', 'epilepsy': 'assess_seizure', 'epileptic': 'assess_seizure', 'convulsing': 'assess_seizure', 'fit': 'assess_seizure', 'frothing': 'assess_seizure', 'spasm': 'assess_seizure', 'twitching': 'assess_seizure',
+                // Fall/Spinal
+                'fall': 'assess_spinal', 'fell': 'assess_spinal', 'ladder': 'assess_spinal', 'roof': 'assess_spinal', 'tree': 'assess_spinal', 'stairs': 'assess_spinal', 'height': 'assess_spinal', 'back': 'assess_spinal', 'slip': 'assess_spinal', 'trip': 'assess_spinal', 'crashed': 'assess_spinal', 'tumbled': 'assess_spinal', 'dropped': 'assess_spinal', 'wall': 'assess_spinal', 'horse': 'assess_spinal', 'bike': 'assess_spinal', 'thrown': 'assess_spinal', 'neck': 'assess_spinal', 'paralyzed': 'assess_spinal', 'can\'t move': 'assess_spinal', 'tingling': 'assess_spinal', 'crushed': 'assess_spinal',
+                // Chest/Stroke
+                'chest': 'assess_chest', 'heart': 'assess_chest', 'pain': 'assess_chest', 'attack': 'assess_chest', 'angina': 'assess_chest', 'crushing': 'assess_chest', 'tightness': 'assess_chest', 'arm pain': 'assess_chest', 'jaw pain': 'assess_chest', 'palpitations': 'assess_chest',
+                'stroke': 'assess_stroke', 'face droop': 'assess_stroke', 'slurred': 'assess_stroke', 'speech': 'assess_stroke', 'weakness': 'assess_stroke'
             }, 
             next: 'amb_s_sample' 
         },
@@ -271,7 +381,7 @@ const CallSim = {
         'wait_diabetic_1': { 
             listen: true, 
             keywords: { 
-                'yes': 'diabetic_check_2', 'yeah': 'diabetic_check_2',
+                'yes': 'diabetic_check_2', 'yeah': 'diabetic_check_2', 'yep': 'diabetic_check_2',
                 'no': 'amb_s_sample', 'nope': 'amb_s_sample' 
             },
             next: 'diabetic_check_2' 
@@ -285,7 +395,7 @@ const CallSim = {
         'amb_a_sample': { text: "Do they have any known allergies?", voice: 'ambulance', next: 'wait_a' },
         'wait_a': { 
             listen: true, 
-            keywords: { 'no': 'amb_prompt_tags_a', 'none': 'amb_prompt_tags_a', 'don\'t know': 'amb_prompt_tags_a', 'yes': 'amb_m_sample' }, 
+            keywords: { 'no': 'amb_prompt_tags_a', 'none': 'amb_prompt_tags_a', 'don\'t know': 'amb_prompt_tags_a', 'nope': 'amb_prompt_tags_a', 'yes': 'amb_m_sample', 'yeah': 'amb_m_sample' }, 
             next: 'amb_m_sample' 
         },
         'amb_prompt_tags_a': { text: "Okay, check their wrists or neck for any medical alert bracelets or tags.", voice: 'ambulance', next: 'amb_m_sample' },
@@ -293,7 +403,7 @@ const CallSim = {
         'amb_m_sample': { text: "Are they taking any medication?", voice: 'ambulance', next: 'wait_m' },
         'wait_m': { 
             listen: true, 
-            keywords: { 'no': 'amb_prompt_phone', 'none': 'amb_prompt_phone', 'don\'t know': 'amb_prompt_phone', 'yes': 'amb_p_sample' }, 
+            keywords: { 'no': 'amb_prompt_phone', 'none': 'amb_prompt_phone', 'don\'t know': 'amb_prompt_phone', 'nope': 'amb_prompt_phone', 'yes': 'amb_p_sample', 'yeah': 'amb_p_sample' }, 
             next: 'amb_p_sample' 
         },
         'amb_prompt_phone': { text: "Please check the emergency contacts or Medical ID on their phone if you can.", voice: 'ambulance', next: 'amb_p_sample' },
@@ -301,7 +411,7 @@ const CallSim = {
         'amb_p_sample': { text: "Do they have any past medical history?", voice: 'ambulance', next: 'wait_p' },
         'wait_p': { 
             listen: true, 
-            keywords: { 'no': 'amb_prompt_tags_p', 'none': 'amb_prompt_tags_p', 'don\'t know': 'amb_prompt_tags_p', 'yes': 'amb_l_sample' }, 
+            keywords: { 'no': 'amb_prompt_tags_p', 'none': 'amb_prompt_tags_p', 'don\'t know': 'amb_prompt_tags_p', 'nope': 'amb_prompt_tags_p', 'yes': 'amb_l_sample', 'yeah': 'amb_l_sample' }, 
             next: 'amb_l_sample' 
         },
         'amb_prompt_tags_p': { text: "Check again for any medical tags or cards in their wallet.", voice: 'ambulance', next: 'amb_l_sample' },
@@ -374,6 +484,7 @@ const CallSim = {
         'assess_seizure': { text: "Help has been arranged and we are expecting them to arrive in {ETA} minutes. Do not restrain them. Move dangerous objects away. Protect their head with something soft. Time the seizure.", voice: 'ambulance', next: 'amb_s_sample' },
         'assess_spinal': { text: "Help has been arranged and we are expecting them to arrive in {ETA} minutes. Do not move them unless they are in immediate danger. Hold their head still to prevent neck movement.", voice: 'ambulance', next: 'amb_s_sample' },
         'assess_chest': { text: "Help has been arranged and we are expecting them to arrive in {ETA} minutes. Sit them down in a comfortable position (W-position). If they are over 16 and not allergic, give them 300mg of Aspirin to chew.", voice: 'ambulance', next: 'amb_s_sample' },
+        'assess_stroke': { text: "Help has been arranged and we are expecting them to arrive in {ETA} minutes. Keep them comfortable and supported. Do not give them anything to eat or drink. Let me know if they become unresponsive.", voice: 'ambulance', next: 'amb_s_sample' },
         
         'pol_connect': { text: "Connecting to Police...", voice: 'bt_operator', next: null },
         'fire_connect': { text: "Connecting to Fire Service...", voice: 'bt_operator', next: null },
@@ -381,6 +492,8 @@ const CallSim = {
     },
 
     init: function() {
+        Tutorial.init(); // Run Tutorial on load
+        
         window.speechSynthesis.onvoiceschanged = () => { this.voices = window.speechSynthesis.getVoices(); };
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         if (SpeechRecognition) {
@@ -480,7 +593,7 @@ const CallSim = {
         this.cprMinutes = 0;
         this.encouragementTimer = setInterval(() => {
             this.cprMinutes++;
-            let timeLeft = Math.max(1, this.calculatedETA - this.cprMinutes);
+            let timeLeft = Math.max(5, this.calculatedETA - this.cprMinutes);
             const messages = [
                 `You are doing well. I know this is tiring, but keep it up. We are almost with you.`,
                 `Don't stop. You are keeping them alive. Help will be there in ${timeLeft} minutes.`,
@@ -551,11 +664,9 @@ const CallSim = {
                     }
                 }
             } else {
-                matched = true; // No keywords required, any input proceeds
+                matched = true; 
             }
 
-            // SMART LOGIC: If Unresponsive flag is set, skip SAMPLE logic
-            // If the next logical step is SAMPLE, hijack it.
             if (this.isUnresponsive && (nextId === 'amb_s_sample' || nextId === 'diabetic_check_1')) {
                 nextId = 'amb_unresponsive_end';
             }
@@ -563,7 +674,6 @@ const CallSim = {
             if (matched) {
                 setTimeout(() => this.runNode(nextId), 500);
             } else {
-                // Fallback for silence/unmatched input
                 this.speak("I didn't catch that. Could you say that again?", this.currentNode.voice, () => {
                     this.startListening();
                 });
@@ -575,8 +685,8 @@ const CallSim = {
         const loc = this.capturedLocation || "";
         const cond = this.capturedCondition || "";
         const remoteKeywords = ['hill', 'river', 'mountain', 'forest', 'lake', 'wood', 'park'];
-        // Critical List
-        const criticalKeywords = ['spinal', 'spine', 'back', 'neck', 'breathing', 'heart', 'stroke', 'arrest', 'cpr', 'unresponsive', 'unconscious', 'bleed', 'burn', 'choke', 'seizure', 'allergy', 'anaphylaxis'];
+        
+        const criticalKeywords = ['spinal', 'spine', 'back', 'neck', 'breathing', 'heart', 'stroke', 'arrest', 'cpr', 'unresponsive', 'unconscious', 'bleed', 'burn', 'choke', 'seizure', 'allergy', 'anaphylaxis', 'amputation', 'hemorrhage', 'epilepsy', 'convulsing', 'paralyzed', 'attack', 'crushing', 'drowning'];
         
         let isRemote = remoteKeywords.some(k => loc.includes(k));
         let isCritical = criticalKeywords.some(k => cond.includes(k)) || this.isUnresponsive;
@@ -599,10 +709,8 @@ const CallSim = {
 
         if (!this.calculatedETA || forceRecalculate) {
             let rawTime = Math.floor(Math.random() * (maxTime - minTime + 1)) + minTime;
-            // Round to nearest 5 (min 5 mins)
             this.calculatedETA = Math.max(5, Math.round(rawTime / 5) * 5);
         } else if (isCritical && this.calculatedETA > 30) {
-            // Auto upgrade logic
             let rawTime = Math.floor(Math.random() * (maxTime - minTime + 1)) + minTime;
             this.calculatedETA = Math.max(5, Math.round(rawTime / 5) * 5);
         }
@@ -642,7 +750,7 @@ const CallSim = {
     toggleMic: function() { if(this.isListening) this.stopListening(); else this.startListening(); }
 };
 
-CallSim.init();
+document.addEventListener('DOMContentLoaded', () => CallSim.init());
 </script>
 </body>
 </html>
