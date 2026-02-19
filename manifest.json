@@ -24,7 +24,7 @@
   "screenshots": [
     {
       "src": "screenshot1.png",
-      "sizes": "414x896",
+      "sizes": "341x743",
       "type": "image/png",
       "form_factor": "narrow",
       "label": "Realistic Dialer Interface"
@@ -59,3 +59,4 @@
     }
   ]
 }
+
