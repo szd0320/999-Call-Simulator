@@ -31,7 +31,7 @@
     },
     {
       "src": "screenshot2.png",
-      "sizes": "414x896",
+      "sizes": "338x741",
       "type": "image/png",
       "form_factor": "narrow",
       "label": "Voice Driven AI Dispatch"
@@ -59,4 +59,5 @@
     }
   ]
 }
+
 
