@@ -20,5 +20,42 @@
       "type": "image/png",
       "purpose": "any maskable"
     }
+  ],
+  "screenshots": [
+    {
+      "src": "screenshot1.png",
+      "sizes": "414x896",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Realistic Dialer Interface"
+    },
+    {
+      "src": "screenshot2.png",
+      "sizes": "414x896",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Voice Driven AI Dispatch"
+    },
+    {
+      "src": "screenshot3.png",
+      "sizes": "414x896",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Real World Protocols"
+    },
+    {
+      "src": "screenshot4.png",
+      "sizes": "414x896",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Built in CPR Metronome"
+    },
+    {
+      "src": "screenshot5.png",
+      "sizes": "414x896",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Dynamic ETAs"
+    }
   ]
 }
