@@ -65,7 +65,7 @@
       "form_factor": "narrow",
       "label": "Dynamic ETAs"
     }
-  ]
+  ],
   "related_applications": [
     {
       "platform": "play",
@@ -83,7 +83,3 @@
     }
   ]
 }
-
-
-
-
