@@ -1,9 +1,9 @@
-/<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>999 Simulator v10.1.3</title>
+<title>999 Simulator v10.1.4</title>
 
 <link rel="manifest" href="manifest.json">
 
@@ -43,9 +43,12 @@
     .wave-bar { width: 3px; background: #22c55e; animation: wave 1s ease-in-out infinite; border-radius: 10px; }
     @keyframes wave { 0%, 100% { height: 10px; } 50% { height: 24px; } }
     
-    /* Scrollbar Hide */
+    /* Scrollbars */
     .no-scrollbar::-webkit-scrollbar { display: none; }
     .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+    .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: #475569; border-radius: 10px; }
 </style>
 </head>
 <body class="flex flex-col">
@@ -56,6 +59,11 @@
         <span class="font-mono text-xs text-slate-400" id="header-status">DISCONNECTED</span>
     </div>
     <div class="flex gap-2">
+        <button onclick="AppInfo.open()" class="w-8 h-8 flex items-center justify-center bg-white/5 hover:bg-white/10 rounded-full text-slate-300 transition" aria-label="About">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+            </svg>
+        </button>
         <button onclick="Tutorial.showManual()" class="w-8 h-8 flex items-center justify-center bg-white/5 hover:bg-white/10 rounded-full text-slate-300 transition" aria-label="Help">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" /></svg>
         </button>
@@ -88,21 +96,13 @@
 
         <div class="flex items-center gap-8 mb-4">
             <button onclick="Dialer.clear()" class="w-16 h-16 flex items-center justify-center text-slate-500 hover:text-white transition">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-8 h-8">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-                <span class="sr-only">Clear All</span>
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-8 h-8"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
             </button>
-            
             <button onclick="Dialer.call()" class="dial-btn dial-call shadow-[0_0_30px_rgba(34,197,94,0.4)]">
                 <svg class="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M20.01 15.38c-1.23 0-2.42-.2-3.53-.56a.977.977 0 00-1.01.24l-1.57 1.97c-2.83-1.44-5.15-3.75-6.59-6.59l1.97-1.57c.23-.23.33-.55.24-1.01a17.27 17.27 0 00-.56-3.53A.995.995 0 008 4H4a1 1 0 00-1 1c0 9.39 7.61 17 17 17a1 1 0 001-1v-4a1 1 0 00-1.01-1.02z"/></svg>
             </button>
-            
             <button onclick="Dialer.backspace()" class="w-16 h-16 flex items-center justify-center text-slate-500 hover:text-white transition">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-8 h-8">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 9.75L14.25 12m0 0l2.25 2.25M14.25 12l2.25-2.25M14.25 12L12 14.25m-2.58 4.92l-6.375-6.375a1.125 1.125 0 010-1.59L9.42 4.83c.211-.211.498-.33.796-.33H19.5a2.25 2.25 0 012.25 2.25v10.5a2.25 2.25 0 01-2.25 2.25h-9.284c-.298 0-.585-.119-.796-.33z" />
-                </svg>
-                <span class="sr-only">Backspace</span>
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-8 h-8"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9.75L14.25 12m0 0l2.25 2.25M14.25 12l2.25-2.25M14.25 12L12 14.25m-2.58 4.92l-6.375-6.375a1.125 1.125 0 010-1.59L9.42 4.83c.211-.211.498-.33.796-.33H19.5a2.25 2.25 0 012.25 2.25v10.5a2.25 2.25 0 01-2.25 2.25h-9.284c-.298 0-.585-.119-.796-.33z" /></svg>
             </button>
         </div>
     </div>
@@ -158,7 +158,81 @@
     </div>
 </div>
 
+<div id="about-modal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="bg-slate-800 rounded-3xl max-w-2xl w-full p-6 border border-slate-700 shadow-2xl relative flex flex-col max-h-[85vh]">
+        <button onclick="AppInfo.close()" class="absolute top-4 right-4 text-slate-400 hover:text-white transition z-10 bg-slate-800 rounded-full p-1">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+        </button>
+        
+        <h2 class="text-2xl font-bold text-white mb-2 tracking-tight">999 Call Simulator</h2>
+        <p class="text-blue-400 text-sm font-semibold mb-4 border-b border-slate-700 pb-4">Educational First Aid & Triage Tool</p>
+        
+        <div class="overflow-y-auto text-slate-300 text-sm leading-relaxed space-y-6 pr-2 custom-scrollbar">
+            <p>
+                The 999 Call Simulator is a voice-interactive educational tool designed to bridge the gap between First Aid theory and real-world application. It simulates a high-pressure emergency call, forcing the user to verbally communicate with an AI operator. Unlike standard multiple-choice quizzes, this simulator requires the user to speak clearly, answer specific triage questions, and react to changing medical situations in real-time. It is designed to practice the Primary Survey (DR ABC), Secondary Survey (S.A.M.P.L.E / AVPU), and specific Outdoor First Aid protocols.
+            </p>
+
+            <div>
+                <h3 class="text-white font-bold text-lg mb-2">Core Interaction</h3>
+                <ul class="list-disc pl-5 space-y-2">
+                    <li><strong>Universal Emergency Dialing:</strong> The simulation begins with a realistic keypad that accepts major international emergency numbers (999, 112, 911, 000, etc.) to initiate the call.</li>
+                    <li><strong>Voice Recognition & Text-to-Speech:</strong> The app listens to the user's spoken answers and responds verbally using distinct voices for the "Switchboard Operator" and the "Ambulance/Police Dispatcher."</li>
+                    <li><strong>Fallback Text Input:</strong> Includes a manual text entry box for users in noisy environments or devices without microphone support.</li>
+                </ul>
+            </div>
+
+            <div>
+                <h3 class="text-white font-bold text-lg mb-2">Advanced Triage Logic (The Script)</h3>
+                <ul class="list-disc pl-5 space-y-2">
+                    <li><strong>Primary Survey Enforcement:</strong> Prioritizes critical checks immediately: Breathing → Consciousness → Location.</li>
+                    <li><strong>AVPU Responsiveness Scale:</strong> If the casualty is awake, the operator drills down to check if they are Alert or responding to Voice. If they fail these checks, they are marked "Unresponsive."</li>
+                    <li><strong>Smart S.A.M.P.L.E. History:</strong> Conducts a secondary survey (Signs, Allergies, Medications, Past History, Last Oral Intake, Events).</li>
+                    <li><strong>Smart Logic:</strong> If the patient is marked "Unresponsive," the simulator intelligently skips questions the patient cannot answer (e.g., "What did you last eat?").</li>
+                    <li><strong>Associative Keyword Recognition:</strong> The AI links context clues to medical issues (e.g., "Tree/Ladder" triggers Spinal protocol; "River/Snow" triggers Hypothermia protocol; "Peanuts/Sting" triggers Anaphylaxis protocol).</li>
+                </ul>
+            </div>
+
+            <div>
+                <h3 class="text-white font-bold text-lg mb-2">Medical Protocols</h3>
+                <ul class="list-disc pl-5 space-y-2">
+                    <li><strong>Cardiac Arrest (CPR Mode):</strong> Recognizes "not breathing" or "agonal gasps." Activates a 120 BPM Audio Metronome to pace chest compressions. Provides an Encouragement Loop every 60 seconds (e.g., "You are keeping them alive, don't stop").</li>
+                    <li><strong>Diabetes:</strong> Detects keywords like "insulin" or "sugar," checks for confusion/hypoglycemia, and advises on glucose administration only if the patient is alert.</li>
+                    <li><strong>Anaphylaxis:</strong> Differentiates between mild reactions and severe breathing difficulties; advises on Adrenaline Auto-Injectors (EpiPen).</li>
+                    <li><strong>Trauma & Bleeding:</strong> Distinguishes between catastrophic (spurting) bleeding and standard wounds, advising on direct pressure, elevation, or tourniquets.</li>
+                    <li><strong>Environmental (Outdoor First Aid):</strong> <em>Hypothermia:</em> Advises on shelter, insulation from the ground, and warm drinks. <em>Hyperthermia:</em> Advises on shade, cooling, and hydration.</li>
+                </ul>
+            </div>
+
+            <div>
+                <h3 class="text-white font-bold text-lg mb-2">Dynamic "Real-World" Elements</h3>
+                <ul class="list-disc pl-5 space-y-2">
+                    <li><strong>Dynamic ETA Generation:</strong> Calculates arrival time based on Location (Urban vs. Remote/Hills) and Severity. <em>Example:</em> A cardiac arrest in a city might get an 8-minute ETA, while a broken ankle on a mountain gets 120+ minutes.</li>
+                    <li><strong>Priority Upgrading:</strong> If the patient’s condition deteriorates (e.g., they stop breathing during the call), the operator "upgrades" the call to Category 1 and provides a new, faster ETA.</li>
+                    <li><strong>Auto-Announcements:</strong> Seamlessly weaves reassurance ("Help has been arranged...") into the conversation between questions.</li>
+                </ul>
+            </div>
+
+            <div>
+                <h3 class="text-white font-bold text-lg mb-2">"Monitor Mode" (Post-Call Support)</h3>
+                <ul class="list-disc pl-5 space-y-2">
+                    <li>The simulator does not end after the questions are answered. It enters a "Monitor Loop" where the operator stays on the line.</li>
+                    <li><strong>Reacts to Changes:</strong> The user can say "They are going to be sick" (triggers Airway advice) or "They stopped breathing" (triggers CPR protocol).</li>
+                    <li><strong>Time Checks:</strong> The user can ask "How much longer?" anytime to hear the remaining ETA.</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
+/* =========================================
+   APP INFO MODAL
+   ========================================= */
+const AppInfo = {
+    open: function() { document.getElementById('about-modal').classList.remove('hidden'); },
+    close: function() { document.getElementById('about-modal').classList.add('hidden'); }
+};
+
 /* =========================================
    TUTORIAL LOGIC
    ========================================= */
@@ -492,7 +566,7 @@ const CallSim = {
     },
 
     init: function() {
-        Tutorial.init(); // Run Tutorial on load
+        Tutorial.init(); 
         
         window.speechSynthesis.onvoiceschanged = () => { this.voices = window.speechSynthesis.getVoices(); };
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -664,9 +738,10 @@ const CallSim = {
                     }
                 }
             } else {
-                matched = true; 
+                matched = true; // No keywords required, any input proceeds
             }
 
+            // SMART LOGIC: If Unresponsive flag is set, skip SAMPLE logic
             if (this.isUnresponsive && (nextId === 'amb_s_sample' || nextId === 'diabetic_check_1')) {
                 nextId = 'amb_unresponsive_end';
             }
@@ -750,20 +825,18 @@ const CallSim = {
     toggleMic: function() { if(this.isListening) this.stopListening(); else this.startListening(); }
 };
 
-document.addEventListener('DOMContentLoaded', () => CallSim.init());
+document.addEventListener('DOMContentLoaded', () => {
+    CallSim.init();
+});
 </script>
-    
-    <script>
-      if (typeof navigator.serviceWorker !== 'undefined') {
-        // It is a good practice to wait for the page to fully load first
+
+<script>
+    if (typeof navigator.serviceWorker !== 'undefined') {
         window.addEventListener('load', function() {
             navigator.serviceWorker.register('sw.js');
         });
-      }
-    </script>
+    }
+</script>
 
 </body>
-</html>
-</body>
-
 </html>
