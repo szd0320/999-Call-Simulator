@@ -59,11 +59,15 @@ self.addEventListener('fetch', (event) => {
                     }
 
                     // Dynamically cache external libraries (Tailwind, Fonts, jsPDF) so they work offline later
-                    const url = event.request.url;
-                    if (url.includes('cdn.tailwindcss.com') || 
-                        url.includes('fonts.googleapis.com') || 
-                        url.includes('fonts.gstatic.com') || 
-                        url.includes('cdnjs.cloudflare.com')) {
+                    const requestUrl = new URL(event.request.url);
+                    const hostname = requestUrl.hostname;
+                    const allowedCdnHosts = [
+                        'cdn.tailwindcss.com',
+                        'fonts.googleapis.com',
+                        'fonts.gstatic.com',
+                        'cdnjs.cloudflare.com'
+                    ];
+                    if (allowedCdnHosts.includes(hostname)) {
                         
                         const responseToCache = networkResponse.clone();
                         caches.open(CACHE_NAME).then((cache) => {
