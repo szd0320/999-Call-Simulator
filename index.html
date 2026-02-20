@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>999 Simulator 11.0.3</title>
+<title>999 Simulator v11.0.4</title>
 
 <link rel="manifest" href="manifest.json">
 
@@ -60,9 +60,7 @@
     </div>
     <div class="flex gap-2">
         <button onclick="AppInfo.open()" class="w-8 h-8 flex items-center justify-center bg-white/5 hover:bg-white/10 rounded-full text-slate-300 transition" aria-label="About">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
-            </svg>
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" /></svg>
         </button>
         <button onclick="Tutorial.showManual()" class="w-8 h-8 flex items-center justify-center bg-white/5 hover:bg-white/10 rounded-full text-slate-300 transition" aria-label="Help">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" /></svg>
@@ -197,7 +195,7 @@ const Tutorial = {
         { icon: '🎙️', title: 'Speak or Type', text: 'When connected, listen to the operator. Tap the microphone button to speak your answers clearly, or use the text box to type.' },
         { icon: '🧠', title: 'Smart Scenarios', text: 'The AI adapts to you. Mentioning keywords like "not breathing", "bleeding", or "diabetes" will trigger real-world medical protocols.' }
     ],
-    init: function() { if(!localStorage.getItem('tut_complete_v19_3')) { document.getElementById('tutorial-modal').classList.remove('hidden'); this.render(); } },
+    init: function() { if(!localStorage.getItem('tut_complete_v21')) { document.getElementById('tutorial-modal').classList.remove('hidden'); this.render(); } },
     render: function() {
         const d = this.data[this.step];
         document.getElementById('tut-icon').textContent = d.icon;
@@ -216,7 +214,7 @@ const Tutorial = {
         }
     },
     next: function() { if (this.step < this.data.length - 1) { this.step++; this.render(); } else { this.finish(); } },
-    finish: function() { localStorage.setItem('tut_complete_v19_3', 'true'); document.getElementById('tutorial-modal').classList.add('hidden'); },
+    finish: function() { localStorage.setItem('tut_complete_v21', 'true'); document.getElementById('tutorial-modal').classList.add('hidden'); },
     showManual: function() { this.step = 0; document.getElementById('tutorial-modal').classList.remove('hidden'); this.render(); }
 };
 
@@ -306,10 +304,7 @@ const CallSim = {
         'diabetic_check_2': { text: "If they are alert and can swallow, give them a sugary drink, glucose gel, or sweets. Do not give them diet drinks.", voice: 'ambulance', next: 'amb_s_sample_no_eta' },
 
         /* --- S.A.M.P.L.E LOGIC --- */
-        // Default entry point (if user gave a vague "what happened" answer)
         'amb_s_sample': { text: "Help has been arranged and we are expecting them to arrive in {ETA} minutes. While we wait, I need to ask a few more questions. How do they look? Are they pale, cold, or in pain?", voice: 'ambulance', next: 'wait_s' },
-        
-        // Split-path entry point (if the user already heard the ETA from a specific medical protocol above)
         'amb_s_sample_no_eta': { text: "While we wait, I need to ask a few more questions. How do they look? Are they pale, cold, or in pain?", voice: 'ambulance', next: 'wait_s' },
         
         'wait_s': { listen: true, keywords: { 'pale': 'amb_s_noted', 'cold': 'amb_s_noted', 'pain': 'amb_s_noted', 'bleeding': 'amb_s_noted', 'sweating': 'amb_s_noted', 'sick': 'amb_s_noted' }, next: 'amb_a_sample' },
@@ -390,10 +385,23 @@ const CallSim = {
             this.recognition.lang = 'en-GB';
             this.recognition.continuous = false;
             this.recognition.onresult = (e) => this.onRecResult(e);
+            
+            // ANTI-FREEZE 1: Detect if mic drops out due to the user pausing to think
+            this.recognition.onerror = (e) => {
+                console.warn("Speech Rec Error:", e.error);
+                if (this.isListening) {
+                    this.stopListening();
+                }
+            };
+            this.recognition.onend = () => {
+                if (this.isListening) {
+                    this.stopListening();
+                    this.addBubble("Mic turned off due to silence. Tap Mic to answer.", 'sys');
+                }
+            };
         }
     },
 
-    // APPLE/SAFARI ULTIMATE AUDIO FIX
     unlockAppleAudio: function() {
         if (!this.appleAudioUnlocked) {
             this.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -483,14 +491,31 @@ const CallSim = {
         if (targetVoice) { u.voice = targetVoice; }
         u.volume = 1; 
         
-        u.onend = () => { 
-            this.isSpeaking = false; 
-            if (callback) setTimeout(callback, 500); 
+        // ANTI-FREEZE 2: Failsafe for iOS Speech Synthesis freezing without firing 'onend'
+        let hasCallbackFired = false;
+        const fireCallback = () => {
+            if (!hasCallbackFired) {
+                hasCallbackFired = true;
+                this.isSpeaking = false;
+                if (callback) setTimeout(callback, 500);
+            }
         };
-        u.onerror = () => {
-            this.isSpeaking = false;
-            console.log("Speech synthesis error or interruption");
-            if (callback) setTimeout(callback, 500);
+
+        const safeTimeout = setTimeout(() => {
+            if (this.isSpeaking && !hasCallbackFired) {
+                console.warn("iOS TTS Hang Prevented. Forcing progression.");
+                fireCallback();
+            }
+        }, (text.length * 80) + 3000); 
+        
+        u.onend = () => { 
+            clearTimeout(safeTimeout);
+            fireCallback(); 
+        };
+        u.onerror = (e) => {
+            clearTimeout(safeTimeout);
+            console.log("Speech synthesis error", e);
+            fireCallback();
         };
         
         window.speechSynthesis.speak(u);
@@ -583,7 +608,6 @@ const CallSim = {
                     }
                 }
                 
-                // If no keyword is hit, but a default 'next' exists, progress anyway!
                 if (!matched && this.currentNode.next) {
                     matched = true;
                 }
@@ -591,7 +615,6 @@ const CallSim = {
                 matched = true; 
             }
 
-            // Unresponsive flag overrides normal SAMPLE loop
             if (this.isUnresponsive && (nextId === 'amb_s_sample' || nextId === 'amb_s_sample_no_eta' || nextId === 'diabetic_check_1')) {
                 nextId = 'amb_unresponsive_end';
             }
