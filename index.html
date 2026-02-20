@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>999 Simulator v11.0.2</title>
+<title>999 Simulator 11.0.3</title>
 
 <link rel="manifest" href="manifest.json">
 
@@ -197,7 +197,7 @@ const Tutorial = {
         { icon: '🎙️', title: 'Speak or Type', text: 'When connected, listen to the operator. Tap the microphone button to speak your answers clearly, or use the text box to type.' },
         { icon: '🧠', title: 'Smart Scenarios', text: 'The AI adapts to you. Mentioning keywords like "not breathing", "bleeding", or "diabetes" will trigger real-world medical protocols.' }
     ],
-    init: function() { if(!localStorage.getItem('tut_complete_v19_2')) { document.getElementById('tutorial-modal').classList.remove('hidden'); this.render(); } },
+    init: function() { if(!localStorage.getItem('tut_complete_v19_3')) { document.getElementById('tutorial-modal').classList.remove('hidden'); this.render(); } },
     render: function() {
         const d = this.data[this.step];
         document.getElementById('tut-icon').textContent = d.icon;
@@ -216,7 +216,7 @@ const Tutorial = {
         }
     },
     next: function() { if (this.step < this.data.length - 1) { this.step++; this.render(); } else { this.finish(); } },
-    finish: function() { localStorage.setItem('tut_complete_v19_2', 'true'); document.getElementById('tutorial-modal').classList.add('hidden'); },
+    finish: function() { localStorage.setItem('tut_complete_v19_3', 'true'); document.getElementById('tutorial-modal').classList.add('hidden'); },
     showManual: function() { this.step = 0; document.getElementById('tutorial-modal').classList.remove('hidden'); this.render(); }
 };
 
@@ -280,6 +280,7 @@ const CallSim = {
         'wait_addr': { listen: true, next: 'amb_q4_phone', capture: 'location' },
         'amb_q4_phone': { text: "What is the telephone number you are calling from?", voice: 'ambulance', next: 'wait_phone' },
         'wait_phone': { listen: true, next: 'amb_q5_happen' },
+        
         'amb_q5_happen': { text: "Tell me exactly what has happened.", voice: 'ambulance', next: 'wait_happen' },
         'wait_happen': { listen: true, capture: 'condition', keywords: { 
             'diabetes': 'diabetic_check_1', 'diabetic': 'diabetic_check_1', 'insulin': 'diabetic_check_1', 'hypo': 'diabetic_check_1', 'sugar': 'diabetic_check_1', 'type 1': 'diabetic_check_1', 'type 2': 'diabetic_check_1', 'faint': 'diabetic_check_1', 'dizzy': 'diabetic_check_1',
@@ -297,15 +298,20 @@ const CallSim = {
 
         'allergy_check': { text: "Help has been arranged. Are they having difficulty breathing, or is there swelling around the mouth or throat?", voice: 'ambulance', next: 'wait_allergy_symptoms' },
         'wait_allergy_symptoms': { listen: true, keywords: { 'yes': 'allergy_severe', 'breathing': 'allergy_severe', 'swollen': 'allergy_severe', 'no': 'allergy_mild', 'nope': 'allergy_mild' }, next: 'allergy_mild' },
-        'allergy_severe': { text: "This sounds like anaphylaxis. If they have an adrenaline auto-injector or EpiPen, help them use it immediately. Keep them comfortable. I have upgraded the ambulance to top priority.", voice: 'ambulance', action: 'upgrade_to_critical', next: 'amb_s_sample' },
-        'allergy_mild': { text: "Monitor them closely. If they are alert and have antihistamines, they can take them. If their breathing changes, tell me immediately.", voice: 'ambulance', next: 'amb_s_sample' },
+        'allergy_severe': { text: "This sounds like anaphylaxis. If they have an adrenaline auto-injector or EpiPen, help them use it immediately. Keep them comfortable. I have upgraded the ambulance to top priority.", voice: 'ambulance', action: 'upgrade_to_critical', next: 'amb_s_sample_no_eta' },
+        'allergy_mild': { text: "Monitor them closely. If they are alert and have antihistamines, they can take them. If their breathing changes, tell me immediately.", voice: 'ambulance', next: 'amb_s_sample_no_eta' },
 
         'diabetic_check_1': { text: "Help has been arranged and will be there in {ETA} minutes. Are they confused, clammy or aggressive?", voice: 'ambulance', next: 'wait_diabetic_1' },
-        'wait_diabetic_1': { listen: true, keywords: { 'yes': 'diabetic_check_2', 'yeah': 'diabetic_check_2', 'yep': 'diabetic_check_2', 'no': 'amb_s_sample', 'nope': 'amb_s_sample' }, next: 'diabetic_check_2' },
-        'diabetic_check_2': { text: "If they are alert and can swallow, give them a sugary drink, glucose gel, or sweets. Do not give them diet drinks.", voice: 'ambulance', next: 'amb_s_sample' },
+        'wait_diabetic_1': { listen: true, keywords: { 'yes': 'diabetic_check_2', 'yeah': 'diabetic_check_2', 'yep': 'diabetic_check_2', 'no': 'amb_s_sample_no_eta', 'nope': 'amb_s_sample_no_eta' }, next: 'diabetic_check_2' },
+        'diabetic_check_2': { text: "If they are alert and can swallow, give them a sugary drink, glucose gel, or sweets. Do not give them diet drinks.", voice: 'ambulance', next: 'amb_s_sample_no_eta' },
 
-        /* --- S.A.M.P.L.E (With Expanded Keyword Recognition & Auto-Progression) --- */
+        /* --- S.A.M.P.L.E LOGIC --- */
+        // Default entry point (if user gave a vague "what happened" answer)
         'amb_s_sample': { text: "Help has been arranged and we are expecting them to arrive in {ETA} minutes. While we wait, I need to ask a few more questions. How do they look? Are they pale, cold, or in pain?", voice: 'ambulance', next: 'wait_s' },
+        
+        // Split-path entry point (if the user already heard the ETA from a specific medical protocol above)
+        'amb_s_sample_no_eta': { text: "While we wait, I need to ask a few more questions. How do they look? Are they pale, cold, or in pain?", voice: 'ambulance', next: 'wait_s' },
+        
         'wait_s': { listen: true, keywords: { 'pale': 'amb_s_noted', 'cold': 'amb_s_noted', 'pain': 'amb_s_noted', 'bleeding': 'amb_s_noted', 'sweating': 'amb_s_noted', 'sick': 'amb_s_noted' }, next: 'amb_a_sample' },
         'amb_s_noted': { text: "Okay, I have noted their symptoms.", voice: 'ambulance', next: 'amb_a_sample' },
 
@@ -357,18 +363,18 @@ const CallSim = {
         'cpr_protocol_agonal': { text: "Agonal gasps are NOT normal breathing. This is cardiac arrest. Help is on the way and will be there in {ETA} minutes. Send for a Defibrillator. Get them on the floor.", voice: 'ambulance', next: 'cpr_instruct' },
         'cpr_instruct': { text: "Place the heel of your hand in the center of the chest. Push hard and fast to the beat. Do not stop.", voice: 'ambulance', action: 'start_cpr', next: null },
 
-        'assess_heat': { text: "Help has been arranged and we are expecting them to arrive in {ETA} minutes. Get them out of the sun and into shade. Remove heavy clothing. Sponge them with cool water and fan them. If they are alert, give frequent sips of water.", voice: 'ambulance', next: 'amb_s_sample' },
-        'assess_cold': { text: "Help has been arranged and we are expecting them to arrive in {ETA} minutes. You must find shelter or a bivi bag. Insulate them from the ground. Replace wet clothing with dry if possible. If they are alert, give warm sweet drinks.", voice: 'ambulance', next: 'amb_s_sample' },
+        'assess_heat': { text: "Help has been arranged and we are expecting them to arrive in {ETA} minutes. Get them out of the sun and into shade. Remove heavy clothing. Sponge them with cool water and fan them. If they are alert, give frequent sips of water.", voice: 'ambulance', next: 'amb_s_sample_no_eta' },
+        'assess_cold': { text: "Help has been arranged and we are expecting them to arrive in {ETA} minutes. You must find shelter or a bivi bag. Insulate them from the ground. Replace wet clothing with dry if possible. If they are alert, give warm sweet drinks.", voice: 'ambulance', next: 'amb_s_sample_no_eta' },
         'assess_bleed': { text: "Help has been arranged and we are expecting them to arrive in {ETA} minutes. Is the blood spurting or pumping out?", voice: 'ambulance', next: 'wait_bleed_type' },
         'wait_bleed_type': { listen: true, keywords: { 'yes': 'bleed_catastrophic', 'spurting': 'bleed_catastrophic', 'no': 'bleed_standard', 'nope': 'bleed_standard' }, next: 'bleed_standard' },
-        'bleed_catastrophic': { text: "This is a life-threatening bleed. Apply direct pressure immediately. If you have a haemostatic dressing or tourniquet, use it now. Do not release pressure.", voice: 'ambulance', next: 'amb_s_sample' },
-        'bleed_standard': { text: "Apply firm direct pressure with a clean cloth. Elevate the limb if possible. Bandage it firmly.", voice: 'ambulance', next: 'amb_s_sample' },
-        'assess_burn': { text: "Help has been arranged and we are expecting them to arrive in {ETA} minutes. Cool the burn with cold running water for at least 20 minutes. Remove jewellery but DO NOT remove clothing stuck to the burn.", voice: 'ambulance', next: 'amb_s_sample' },
+        'bleed_catastrophic': { text: "This is a life-threatening bleed. Apply direct pressure immediately. If you have a haemostatic dressing or tourniquet, use it now. Do not release pressure.", voice: 'ambulance', next: 'amb_s_sample_no_eta' },
+        'bleed_standard': { text: "Apply firm direct pressure with a clean cloth. Elevate the limb if possible. Bandage it firmly.", voice: 'ambulance', next: 'amb_s_sample_no_eta' },
+        'assess_burn': { text: "Help has been arranged and we are expecting them to arrive in {ETA} minutes. Cool the burn with cold running water for at least 20 minutes. Remove jewellery but DO NOT remove clothing stuck to the burn.", voice: 'ambulance', next: 'amb_s_sample_no_eta' },
         'assess_choke': { text: "Help has been arranged and we are expecting them to arrive in {ETA} minutes. Encourage them to cough. If that fails, give 5 back blows between the shoulder blades. If that fails, give 5 abdominal thrusts.", voice: 'ambulance', next: null },
-        'assess_seizure': { text: "Help has been arranged and we are expecting them to arrive in {ETA} minutes. Do not restrain them. Move dangerous objects away. Protect their head with something soft. Time the seizure.", voice: 'ambulance', next: 'amb_s_sample' },
-        'assess_spinal': { text: "Help has been arranged and we are expecting them to arrive in {ETA} minutes. Do not move them unless they are in immediate danger. Hold their head still to prevent neck movement.", voice: 'ambulance', next: 'amb_s_sample' },
-        'assess_chest': { text: "Help has been arranged and we are expecting them to arrive in {ETA} minutes. Sit them down in a comfortable position (W-position). If they are over 16 and not allergic, give them 300mg of Aspirin to chew.", voice: 'ambulance', next: 'amb_s_sample' },
-        'assess_stroke': { text: "Help has been arranged and we are expecting them to arrive in {ETA} minutes. Keep them comfortable and supported. Do not give them anything to eat or drink. Let me know if they become unresponsive.", voice: 'ambulance', next: 'amb_s_sample' },
+        'assess_seizure': { text: "Help has been arranged and we are expecting them to arrive in {ETA} minutes. Do not restrain them. Move dangerous objects away. Protect their head with something soft. Time the seizure.", voice: 'ambulance', next: 'amb_s_sample_no_eta' },
+        'assess_spinal': { text: "Help has been arranged and we are expecting them to arrive in {ETA} minutes. Do not move them unless they are in immediate danger. Hold their head still to prevent neck movement.", voice: 'ambulance', next: 'amb_s_sample_no_eta' },
+        'assess_chest': { text: "Help has been arranged and we are expecting them to arrive in {ETA} minutes. Sit them down in a comfortable position (W-position). If they are over 16 and not allergic, give them 300mg of Aspirin to chew.", voice: 'ambulance', next: 'amb_s_sample_no_eta' },
+        'assess_stroke': { text: "Help has been arranged and we are expecting them to arrive in {ETA} minutes. Keep them comfortable and supported. Do not give them anything to eat or drink. Let me know if they become unresponsive.", voice: 'ambulance', next: 'amb_s_sample_no_eta' },
         
         'pol_connect': { text: "Connecting to Police...", voice: 'bt_operator', next: null },
         'fire_connect': { text: "Connecting to Fire Service...", voice: 'bt_operator', next: null },
@@ -390,29 +396,20 @@ const CallSim = {
     // APPLE/SAFARI ULTIMATE AUDIO FIX
     unlockAppleAudio: function() {
         if (!this.appleAudioUnlocked) {
-            // 1. Unlock Web Audio Context (For CPR Metronome)
             this.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            
-            // Force Apple to recognize audio by playing a silent 0.01s beep
             const osc = this.audioCtx.createOscillator();
             const gain = this.audioCtx.createGain();
-            gain.gain.value = 0; // Completely silent
+            gain.gain.value = 0; 
             osc.connect(gain);
             gain.connect(this.audioCtx.destination);
             osc.start(0);
             osc.stop(0.01);
+            if (this.audioCtx.state === 'suspended') { this.audioCtx.resume(); }
             
-            if (this.audioCtx.state === 'suspended') { 
-                this.audioCtx.resume(); 
-            }
-
-            // 2. Unlock Speech Synthesis Engine
-            window.speechSynthesis.cancel(); // Clear iOS stuck queue bug
-            
-            // iOS ignores empty strings (''). We must use a real word at zero volume.
+            window.speechSynthesis.cancel(); 
             const silentUtterance = new SpeechSynthesisUtterance('ready');
             silentUtterance.volume = 0; 
-            silentUtterance.rate = 2; // Play as fast as possible to get it out of the way
+            silentUtterance.rate = 2; 
             window.speechSynthesis.speak(silentUtterance);
             
             this.appleAudioUnlocked = true;
@@ -464,17 +461,12 @@ const CallSim = {
 
     speak: function(text, voiceType, callback) {
         this.isSpeaking = true;
-        
-        // CRITICAL iOS FIX: Cancel any pending/stuck speech before starting a new one
         window.speechSynthesis.cancel(); 
 
         const u = new SpeechSynthesisUtterance(text);
         u.lang = 'en-GB';
         
-        // Fallback: If voices haven't loaded yet, try fetching them again (common iOS delay)
-        if (this.voices.length === 0) {
-            this.voices = window.speechSynthesis.getVoices();
-        }
+        if (this.voices.length === 0) { this.voices = window.speechSynthesis.getVoices(); }
         
         let targetVoice = null;
         if (voiceType === 'bt_operator') {
@@ -488,18 +480,13 @@ const CallSim = {
             u.pitch = 1.0; u.rate = 1.05;
         }
         
-        if (targetVoice) {
-            u.voice = targetVoice;
-        }
-        
-        u.volume = 1; // Ensure volume is maxed out after the silent unlock
+        if (targetVoice) { u.voice = targetVoice; }
+        u.volume = 1; 
         
         u.onend = () => { 
             this.isSpeaking = false; 
             if (callback) setTimeout(callback, 500); 
         };
-        
-        // Failsafe for iOS: If the onend event fails to fire (another known Apple bug), force the callback after a timeout
         u.onerror = () => {
             this.isSpeaking = false;
             console.log("Speech synthesis error or interruption");
@@ -596,7 +583,7 @@ const CallSim = {
                     }
                 }
                 
-                // NEW FEATURE: If no keyword is hit, but a default 'next' exists, progress anyway!
+                // If no keyword is hit, but a default 'next' exists, progress anyway!
                 if (!matched && this.currentNode.next) {
                     matched = true;
                 }
@@ -604,7 +591,8 @@ const CallSim = {
                 matched = true; 
             }
 
-            if (this.isUnresponsive && (nextId === 'amb_s_sample' || nextId === 'diabetic_check_1')) {
+            // Unresponsive flag overrides normal SAMPLE loop
+            if (this.isUnresponsive && (nextId === 'amb_s_sample' || nextId === 'amb_s_sample_no_eta' || nextId === 'diabetic_check_1')) {
                 nextId = 'amb_unresponsive_end';
             }
 
